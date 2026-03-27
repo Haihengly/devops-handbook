@@ -85,15 +85,15 @@ It improves security by restricting access based on **roles**.
 - Different from Global Roles (which apply across Jenkins).
 - Allows you to limit access to only certain items without giving full Jenkins access.
 
-**Step 1 :**Add role name, e.g., Developer
+**Step 1 :** Add role name, e.g., Developer
 
-**Step 2 :**Set a pattern to match jobs/folders (REGEX)
+**Step 2 :** Set a pattern to match jobs/folders (REGEX)
 
 - Example: `Project-A*`
 
-**Step 3 :**Choose Permission Templates
+**Step 3 :** Choose Permission Templates
 
-**Step 4:** Click **Add** and **Save** 
+**Step 4 :** Click **Add** and **Save** 
 
 > 💡 Item Roles + Global Roles can be combined for fine-grained access control
 
