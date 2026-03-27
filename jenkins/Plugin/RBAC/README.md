@@ -4,14 +4,16 @@
 
 ---
 
-## 📌 What is RBAC?
+## What is RBAC?
 
 RBAC allows you to control **who can do what** in Jenkins.  
 It improves security by restricting access based on **roles**.
 
-- Admin → Full access
-- Developer → Build and read
-- Viewer → Read-only
+- Admin : Full access
+- Manager : Trigger build, View builds, view reports
+- Developer : Create, edit, build job
+- QA : Trigger builds, view job status, access logs
+- Viewer : Read-only
 
 ---
 
@@ -19,31 +21,50 @@ It improves security by restricting access based on **roles**.
 
 - Jenkins installed
 - Admin access to Jenkins
-- Role-Based Strategy Plugin (we’ll install next)
+- Role-Based Strategy Plugin
 
 ---
 
-## 🔌 Step 1: Install Role-Based Strategy Plugin
+## Step 1️⃣ : Install Role-Based Strategy Plugin
 
-- [x] Go to **Manage Jenkins → Plugins**  
-- [x] Search for **Role-Based Strategy**  
-- [x] Click **Install** (restart if needed)  
+1. Go to **Manage Jenkins → Plugins**  
+2. Search for **Role-Based Strategy**  
+3. Click **Install** (restart if needed)  
 
 > 💡 Screenshot example: `./screenshots/plugins.png`
 
 ---
 
-## 🔒 Step 2: Enable RBAC
+## Step 2️⃣ : Enable RBAC
 
-1. Go to **Manage Jenkins → Configure Global Security**  
-2. Under **Authorization**, select **Role-Based Strategy**  
+1. Go to **Manage Jenkins → Security**  
+2. Under **Authorization**, select **Role-Based Strategy**
 3. Click **Save**  
 
 > ✅ Important: Keep at least one admin user to avoid locking yourself out
 
 ---
 
-## 👤 Step 3: Create Roles
+## Step 3️⃣: Create Roles
+
+1. ### Permission Templates
+
+> Use template to quickly assign permissions to each role
+
+**Global Roles Example:**
+
+Permission Templates
+
+| Name                | Read | Build | Configure | Admin |
+|---------------------|------|--------|----------|--------|
+| Developer Template  | ✅   | ✅    | ✅       | ✅    |
+| Auditor Template    | ✅   | ✅    | ❌       | ❌    |
+| QA Template         | ✅   | ❌    | ❌       | ❌    |
+| Manager Template    | ✅   | ❌    | ❌       | ❌    |
+
+
+
+
 
 **Global Roles Example:**
 
