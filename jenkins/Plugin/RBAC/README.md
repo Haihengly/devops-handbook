@@ -100,11 +100,12 @@ It improves security by restricting access based on **roles**.
 ### 3.3. Assign Roles
 
 > Add User ID and Select the role you want to assign
+
 > ✅ Check with a test user to confirm permissions
 
 ---
 
-## ⚠️ Notes 
+## 🗒️ Notes 
 
 - If a user has **no role**, they have **no access**  
 - Always keep at least **one admin account**  
