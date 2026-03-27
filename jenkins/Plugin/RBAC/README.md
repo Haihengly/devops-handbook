@@ -1,21 +1,94 @@
-# Jenkins RBAC Setup Guide
+# 🔐 Jenkins RBAC (Role-Based Access Control) Guide
 
-## 📌 What is RBAC
-Role-Based Access Control lets you control what users can do in Jenkins.
+> Step-by-step guide to set up Role-Based Access Control in Jenkins.
 
-## ⚙️ Install Plugin
-1. Go to Manage Jenkins
-2. Click Plugins
-3. Install Role-Based Strategy Plugin
+---
 
-## 👤 Roles
+## 📌 What is RBAC?
 
-| Role   | Read | Build | Configure |
-|--------|------|-------|----------|
-| Admin  | ✅   | ✅    | ✅       |
-| Dev    | ✅   | ✅    | ❌       |
-| Viewer | ✅   | ❌    | ❌       |
+RBAC allows you to control **who can do what** in Jenkins.  
+It improves security by restricting access based on **roles**.
 
-## 📝 Notes
-- Always keep one admin user
-- Be careful not to lock yourself out
+- Admin → Full access
+- Developer → Build and read
+- Viewer → Read-only
+
+---
+
+## ⚙️ Requirements
+
+- Jenkins installed
+- Admin access to Jenkins
+- Role-Based Strategy Plugin (we’ll install next)
+
+---
+
+## 🔌 Step 1: Install Role-Based Strategy Plugin
+
+- [x] Go to **Manage Jenkins → Plugins**  
+- [x] Search for **Role-Based Strategy**  
+- [x] Click **Install** (restart if needed)  
+
+> 💡 Screenshot example: `./screenshots/plugins.png`
+
+---
+
+## 🔒 Step 2: Enable RBAC
+
+1. Go to **Manage Jenkins → Configure Global Security**  
+2. Under **Authorization**, select **Role-Based Strategy**  
+3. Click **Save**  
+
+> ✅ Important: Keep at least one admin user to avoid locking yourself out
+
+---
+
+## 👤 Step 3: Create Roles
+
+**Global Roles Example:**
+
+| Role   | Read | Build | Configure | Admin |
+|--------|------|-------|----------|-------|
+| Admin  | ✅   | ✅    | ✅       | ✅    |
+| Dev    | ✅   | ✅    | ❌       | ❌    |
+| Viewer | ✅   | ❌    | ❌       | ❌    |
+
+- [x] Go to **Manage Jenkins → Manage and Assign Roles → Manage Roles**  
+- [x] Create roles with the desired permissions  
+
+> 💡 Screenshot example: `./screenshots/rbac-config.png`
+
+---
+
+## 🧑‍💻 Step 4: Assign Roles to Users
+
+1. Go to **Manage Jenkins → Manage and Assign Roles → Assign Roles**  
+2. Assign each user to the proper role  
+3. Save changes
+
+> ✅ Check with a test user to confirm permissions
+
+---
+
+## ⚠️ Notes / Gotchas
+
+- If a user has **no role**, they have **no access**  
+- Always keep at least **one admin account**  
+- Double-check roles after creating pipelines or plugins  
+- Keep screenshots for future reference  
+
+---
+
+## 📝 Example Checklist for Setup
+
+- [x] Plugin installed  
+- [x] RBAC enabled  
+- [x] Roles created  
+- [ ] Users assigned  
+
+---
+
+## 🔗 References
+
+- [Jenkins RBAC Documentation](https://www.jenkins.io/doc/book/security/authorization/)  
+- [Role-Based Strategy Plugin](https://plugins.jenkins.io/role-strategy/)  
