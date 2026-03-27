@@ -79,6 +79,7 @@ It improves security by restricting access based on **roles**.
 - [x] **Click Save** 
 
 > **Item Role**
+
 ❔ What is an Item Role?
 - In Jenkins, an Item Role is a role that applies to specific jobs, folders, or pipelines.
 - Different from Global Roles (which apply across Jenkins).
