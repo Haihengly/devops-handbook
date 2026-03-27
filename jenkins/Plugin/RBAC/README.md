@@ -49,9 +49,9 @@ It improves security by restricting access based on **roles**.
 
 > Go to **Manage Jenkins → Manage and Assign Roles**
 
-1. ### Permission Templates
+### 3.1. Permission Templates
 
-> Use template to quickly assign permissions to each role
+> Templates help standardize permissions across roles
 
 **Permission Templates Example**
 
@@ -64,7 +64,7 @@ It improves security by restricting access based on **roles**.
 
 - [x] **Click Save**  
 
-1. ### Manage Roles
+### 3.2. Manage Roles
 
 > Under Role to add **Enter Roles -> Click Add**
 
@@ -73,7 +73,7 @@ It improves security by restricting access based on **roles**.
 | Role     | Read | Administer | 
 |----------|------|------------|
 | admin    | ❌   | ✅        | 
-| Devloper | ✅   | ❌        |
+| Developer | ✅   | ❌        |
 | Manager  | ✅   | ❌        | 
 | QA       | ✅   | ❌        | 
 | Auditor  | ✅   | ❌        | 
@@ -87,11 +87,14 @@ It improves security by restricting access based on **roles**.
 - Allows you to limit access to only certain items without giving full Jenkins access.
 
 **Step 1 :**Add role name, e.g., Developer
-**Step 2 :**Set a pattern to match jobs/folders
-**Step 3 :**Choose Template
-**Step 4 :**Click Add
+**Step 2 :**Set a pattern to match jobs/folders (REGEX)
+- Example: `Project-A*`
+**Step 3 :**Choose Permission Templates
+**Step 4:** Click **Add** and **Save** 
 
-3. ### Assign Roles
+> 💡 Item Roles + Global Roles can be combined for fine-grained access control
+
+### 3.3. Assign Roles
 
 > Add User ID and Select the role you want to assign
 > ✅ Check with a test user to confirm permissions
@@ -107,5 +110,5 @@ It improves security by restricting access based on **roles**.
 ---
 
 ## 🔗 References
- 
+
 - [Role-Based Strategy Plugin](https://plugins.jenkins.io/role-strategy/)  
