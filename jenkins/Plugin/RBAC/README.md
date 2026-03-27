@@ -64,7 +64,7 @@ It improves security by restricting access based on **roles**.
 
 ### 3.2. Manage Roles
 
-> Under Role to add **Enter Roles -> Click Add**
+> Under "Role to add" **Enter Roles -> Click Add**
 
 **Global Roles Example:**
 
