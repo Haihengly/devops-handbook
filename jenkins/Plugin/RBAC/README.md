@@ -47,69 +47,65 @@ It improves security by restricting access based on **roles**.
 
 ## Step 3️⃣: Create Roles
 
+> Go to **Manage Jenkins → Manage and Assign Roles**
+
 1. ### Permission Templates
 
 > Use template to quickly assign permissions to each role
 
+**Permission Templates Example**
+
+| Name                | Read | Build | Configure |
+|---------------------|------|--------|----------|
+| Developer Template  | ✅   | ✅    | ✅       | 
+| Auditor Template    | ✅   | ❌    | ❌       | 
+| QA Template         | ✅   | ❌    | ❌       | 
+| Manager Template    | ✅   | ✅    | ❌       | 
+
+- [x] **Click Save**  
+
+1. ### Manage Roles
+
+> Under Role to add **Enter Roles -> Click Add**
+
 **Global Roles Example:**
 
-Permission Templates
+| Role     | Read | Administer | 
+|----------|------|------------|
+| admin    | ❌   | ✅        | 
+| Devloper | ✅   | ❌        |
+| Manager  | ✅   | ❌        | 
+| QA       | ✅   | ❌        | 
+| Auditor  | ✅   | ❌        | 
 
-| Name                | Read | Build | Configure | Admin |
-|---------------------|------|--------|----------|--------|
-| Developer Template  | ✅   | ✅    | ✅       | ✅    |
-| Auditor Template    | ✅   | ✅    | ❌       | ❌    |
-| QA Template         | ✅   | ❌    | ❌       | ❌    |
-| Manager Template    | ✅   | ❌    | ❌       | ❌    |
+- [x] **Click Save** 
 
+> **Item Role**
+❔ What is an Item Role?
+- In Jenkins, an Item Role is a role that applies to specific jobs, folders, or pipelines.
+- Different from Global Roles (which apply across Jenkins).
+- Allows you to limit access to only certain items without giving full Jenkins access.
 
+**Step 1 :**Add role name, e.g., Developer
+**Step 2 :**Set a pattern to match jobs/folders
+**Step 3 :**Choose Template
+**Step 4 :**Click Add
 
+3. ### Assign Roles
 
-
-**Global Roles Example:**
-
-| Role   | Read | Build | Configure | Admin |
-|--------|------|-------|----------|-------|
-| Admin  | ✅   | ✅    | ✅       | ✅    |
-| Dev    | ✅   | ✅    | ❌       | ❌    |
-| Viewer | ✅   | ❌    | ❌       | ❌    |
-
-- [x] Go to **Manage Jenkins → Manage and Assign Roles → Manage Roles**  
-- [x] Create roles with the desired permissions  
-
-> 💡 Screenshot example: `./screenshots/rbac-config.png`
-
----
-
-## 🧑‍💻 Step 4: Assign Roles to Users
-
-1. Go to **Manage Jenkins → Manage and Assign Roles → Assign Roles**  
-2. Assign each user to the proper role  
-3. Save changes
-
+> Add User ID and Select the role you want to assign
 > ✅ Check with a test user to confirm permissions
 
 ---
 
-## ⚠️ Notes / Gotchas
+## ⚠️ Notes 
 
 - If a user has **no role**, they have **no access**  
 - Always keep at least **one admin account**  
 - Double-check roles after creating pipelines or plugins  
-- Keep screenshots for future reference  
-
----
-
-## 📝 Example Checklist for Setup
-
-- [x] Plugin installed  
-- [x] RBAC enabled  
-- [x] Roles created  
-- [ ] Users assigned  
 
 ---
 
 ## 🔗 References
-
-- [Jenkins RBAC Documentation](https://www.jenkins.io/doc/book/security/authorization/)  
+ 
 - [Role-Based Strategy Plugin](https://plugins.jenkins.io/role-strategy/)  
