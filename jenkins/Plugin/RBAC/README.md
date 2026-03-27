@@ -31,8 +31,6 @@ It improves security by restricting access based on **roles**.
 2. Search for **Role-Based Strategy**  
 3. Click **Install** (restart if needed)  
 
-> 💡 Screenshot example: `./screenshots/plugins.png`
-
 ---
 
 ## Step 2️⃣ : Enable RBAC
