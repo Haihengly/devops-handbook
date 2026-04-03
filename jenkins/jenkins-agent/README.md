@@ -4,7 +4,7 @@
 
 ---
 
-## What is RBAC?
+## What is Jenkins Agent?
 
 > It’s a computer (VM, server, or container) that connects to the Jenkins server.
 
@@ -72,7 +72,7 @@ sudo chmod -R 755 /home/jenkins
 > Below Run from agent command line: (Unix) Copy the second line then run
 
 ```bash
-java -jar agent.jar -url http://<YOUR_JENKINS_URL>/ -secret <SECRET> -name Agent01 -webSocket -workDir "/home/jenkins"
+sudo java -jar agent.jar -url http://<YOUR_JENKINS_URL>/ -secret <SECRET> -name Agent01 -webSocket -workDir "/home/jenkins"
 ```
 
 - [x] Expect Resault **Connected**
@@ -115,17 +115,6 @@ WantedBy=multi-user.target
 sudo systemctl daemon-reload
 sudo systemctl enable jenkins-agent
 sudo systemctl start jenkins-agent
-sudo systemctl status jenkins-agent
-```
-
----
-
-## Step 8: Update agent.jar
-
-```bash
-cd /home/jenkins
-curl -sO http://<YOUR_JENKINS_URL>/jnlpJars/agent.jar
-sudo systemctl restart jenkins-agent
 sudo systemctl status jenkins-agent
 ```
 
