@@ -1,27 +1,18 @@
-
-#!/bin/bash
-# ==========================================
-# Jenkins Agent Tutorial Auto-Setup & Push
-# ==========================================
-
-# 1️⃣ Ask for your GitHub info
-read -p "Enter your GitHub username: " GH_USER
-read -p "Enter your GitHub repo name (e.g., jenkins-agent-tutorial): " GH_REPO
-read -p "Enter your GitHub repo URL (HTTPS or SSH): " GH_URL
-
-# 2️⃣ Create tutorial folder
-mkdir -p "$GH_REPO"
-cd "$GH_REPO" || exit
-
-# 3️⃣ Create Markdown file
-cat << 'EOF' > jenkins-agent-setup.md
 # Jenkins Agent Setup Tutorial
 
-This tutorial explains how to **create and run a permanent Jenkins agent** on a Linux VM using systemd.
+> This tutorial explains how to **create and run a permanent Jenkins agent** on a Linux VM using systemd.
 
 ---
 
-## Prerequisites
+## What is RBAC?
+
+> It’s a computer (VM, server, or container) that connects to the Jenkins server.
+
+>The agent actually runs the jobs — it does the heavy work, so the main Jenkins server stays clean and responsive.
+
+---
+
+## ⚙️ Requirements
 
 - Jenkins server up and running
 - Linux VM for agent
@@ -32,30 +23,30 @@ This tutorial explains how to **create and run a permanent Jenkins agent** on a 
 
 ## Step 1: Install Java
 
-\`\`\`bash
+```bash
 sudo apt update
 sudo apt install -y openjdk-17-jdk
 java -version
-\`\`\`
+```
 
 ---
 
 ## Step 2: Create a Jenkins user
 
-\`\`\`bash
+```bash
 sudo useradd -m -s /bin/bash jenkins
 sudo passwd jenkins
-\`\`\`
+```
 
 ---
 
 ## Step 3: Download agent.jar
 
-\`\`\`bash
+```bash
 mkdir -p /home/jenkins
 cd /home/jenkins
 curl -sO http://<YOUR_JENKINS_URL>/jnlpJars/agent.jar
-\`\`\`
+```
 
 ---
 
@@ -69,21 +60,21 @@ curl -sO http://<YOUR_JENKINS_URL>/jnlpJars/agent.jar
 
 ## Step 5: Test run manually
 
-\`\`\`bash
+```bash
 java -jar agent.jar -url http://<YOUR_JENKINS_URL>/ -secret <SECRET> -name Agent01 -webSocket -workDir "/home/jenkins"
-\`\`\`
+```
 
 ---
 
 ## Step 6: Create systemd service
 
-\`\`\`bash
+```bash
 sudo nano /etc/systemd/system/jenkins-agent.service
-\`\`\`
+```
 
 Paste:
 
-\`\`\`ini
+```ini
 [Unit]
 Description=Jenkins Agent
 After=network.target
@@ -101,43 +92,28 @@ Restart=always
 
 [Install]
 WantedBy=multi-user.target
-\`\`\`
+```
 
 ---
 
 ## Step 7: Enable and start service
 
-\`\`\`bash
+```bash
 sudo systemctl daemon-reload
 sudo systemctl enable jenkins-agent
 sudo systemctl start jenkins-agent
 sudo systemctl status jenkins-agent
-\`\`\`
+```
 
 ---
 
 ## Step 8: Update agent.jar
 
-\`\`\`bash
+```bash
 cd /home/jenkins
 curl -sO http://<YOUR_JENKINS_URL>/jnlpJars/agent.jar
 sudo systemctl restart jenkins-agent
 sudo systemctl status jenkins-agent
-\`\`\`
+```
 
 ---
-
-Tutorial complete ✅
-EOF
-
-# 4️⃣ Initialize git
-git init
-git add jenkins-agent-setup.md
-git commit -m "Add Jenkins agent setup tutorial"
-
-# 5️⃣ Add GitHub remote & push
-git remote add origin "$GH_URL"
-git branch -M main
-git push -u origin main
-
-echo "🎉 Tutorial pushed to GitHub repo: $GH_URL"
