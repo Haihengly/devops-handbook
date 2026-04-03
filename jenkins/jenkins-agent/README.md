@@ -38,31 +38,44 @@ sudo useradd -m -s /bin/bash jenkins
 sudo passwd jenkins
 ```
 
----
-
 ## Step 3: Download agent.jar
 
 ```bash
-mkdir -p /home/jenkins
+sudo mkdir -p /home/jenkins
 cd /home/jenkins
-curl -sO http://<YOUR_JENKINS_URL>/jnlpJars/agent.jar
+sudo curl -sO http://<YOUR_JENKINS_URL>/jnlpJars/agent.jar
+```
+1. Jenkins → Manage Jenkins → Manage Nodes → New Node  
+2. Tick permanent agent  
+3. Click Create
+4. Run command 
+
+> Below Run from agent command line: (Unix) Copy the first line then run 
+
+```bash
+sudo curl -sO http://<YOUR_JENKINS_URL>/jnlpJars/agent.jar
 ```
 
 ---
 
-## Step 4: Get agent secret from Jenkins
+## Step 4: Fix file ownership
 
-1. Jenkins → Manage Jenkins → Manage Nodes → New Node  
-2. Create a permanent agent  
-3. Copy the secret key for JNLP agent
+```bash
+sudo chown -R jenkins:jenkins /home/jenkins
+sudo chmod -R 755 /home/jenkins
+```
 
 ---
 
 ## Step 5: Test run manually
 
+> Below Run from agent command line: (Unix) Copy the second line then run
+
 ```bash
 java -jar agent.jar -url http://<YOUR_JENKINS_URL>/ -secret <SECRET> -name Agent01 -webSocket -workDir "/home/jenkins"
 ```
+
+- [x] Expect Resault **Connected**
 
 ---
 
@@ -72,7 +85,7 @@ java -jar agent.jar -url http://<YOUR_JENKINS_URL>/ -secret <SECRET> -name Agent
 sudo nano /etc/systemd/system/jenkins-agent.service
 ```
 
-Paste:
+> Configuration :
 
 ```ini
 [Unit]
@@ -85,7 +98,7 @@ WorkingDirectory=/home/jenkins
 ExecStart=/usr/bin/java -jar /home/jenkins/agent.jar \
   -url http://<YOUR_JENKINS_URL>/ \
   -secret <SECRET> \
-  -name Agent01 \
+  -name <Your_Agent_Name> \
   -webSocket \
   -workDir /home/jenkins
 Restart=always
