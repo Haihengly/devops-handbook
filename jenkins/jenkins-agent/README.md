@@ -43,7 +43,6 @@ sudo passwd jenkins
 ```bash
 sudo mkdir -p /home/jenkins
 cd /home/jenkins
-sudo curl -sO http://<YOUR_JENKINS_URL>/jnlpJars/agent.jar
 ```
 1. Jenkins → Manage Jenkins → Manage Nodes → New Node  
 2. Tick permanent agent  
@@ -118,4 +117,4 @@ sudo systemctl start jenkins-agent
 sudo systemctl status jenkins-agent
 ```
 
----
+--- 
