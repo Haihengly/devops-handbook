@@ -1,24 +1,24 @@
-# Jenkins Agent — POC Testing Report
+# Jenkins Agent — POC Testing
 
 > **Purpose:** Evidence-based recommendation for CI/CD agent strategy
+
 > **Topic:** Static Agent vs Docker Agent (Per Job & Per Stage)
 
 ---
 
 ## 1. Test Environment
 
-| Component | Static Agent VM | Docker Agent VM 01 | Docker Agent VM 02 | CD VM |
+| Component | Static Agent VM | Docker Agent VM 01 | Docker Agent VM 02 |
 |---|---|---|---|---|
-| VM Specs | Same across all VMs | Same across all VMs | Same across all VMs | Same across all VMs |
-| Executors | 2 executors | 2 executors | 2 executors | Static Agent |
-| Agent Type | Static (agent any) | Docker - Per Job | Docker - Per Stage | Static Agent |
-| CD Tool | N/A | N/A | N/A | Ansible |
+| VM Specs | Same across all VMs | Same across all VMs | Same across all VMs | 
+| Executors | 2 executors | 2 executors | 2 executors | 
+| Agent Type | Static (agent any) | Docker - Per Job | Docker - Per Stage |
 
 ---
 
 ## 2. Test Results
 
-### Test 1 — Single Job: Static Agent vs Docker Agent
+### Test 1 — Single Small Job: Static Agent vs Docker Agent
 
 | Agent Type | Checkout | Build Image | CPU Load Stage | Total Time |
 |---|---|---|---|---|
@@ -29,12 +29,12 @@
 
 ---
 
-### Test 2 — 3 Jobs Simultaneously: Static Agent vs Docker Agent
+### Test 2 — Big 3 Jobs Simultaneously: Static Agent vs Docker Agent
 
 | Agent Type | Job 1 & 2 Finish | Job 3 Finish | Job 3 Wait? | Total Time |
 |---|---|---|---|---|
 | Static Agent | ~20 min | ~40 min | Yes ⏳ waits for slot | ~40 min |
-| Docker Agent | ~20 min | ~20 min | No ✅ starts immediately | **~20 min ✅ Winner** |
+| Docker Agent | ~10 min | ~20 min | No ✅ starts immediately | **~20 min ✅ Winner** |
 
 > *Docker Agent completes all 3 jobs in half the time. No queuing with Docker Agent since each job gets its own container.*
 
@@ -97,20 +97,6 @@
 
 ---
 
-## 5. Final Recommendation
-
-### Current Recommendation — Docker Agent Per Job
-
-| Factor | Detail |
-|---|---|
-| Agent Type | Docker Agent Per Job |
-| Dockerfile Location | Separate Git repository — version controlled, consistent across all CI VMs |
-| CI VMs | 2 VMs, 4 executors each (after VM upgrade to 8 core 16GB) |
-| Expected Max Load | 5-6 jobs simultaneously — comfortably handled with 8 total executors |
-| CD Agent | Static Agent on CD VM — runs Ansible playbooks to deploy Docker containers |
-
----
-
 ### When to Switch to Per Stage in the Future
 
 | Condition | Action |
@@ -123,13 +109,13 @@
 
 ## Conclusion
 
-Based on POC testing across multiple scenarios — **Docker Agent Per Job** is the recommended approach for our environment.
+Based on POC testing across multiple scenarios — **Docker Agent Per Job** is the recommended approach for environment.
 
 It provides:
 - ✅ Clean isolated builds per job
 - ✅ No environment bleed between jobs
 - ✅ Better performance than Static Agent (~2x faster)
 - ✅ Simple configuration and low maintenance
-- ✅ Scales well for our expected load of 5-6 simultaneous jobs
+- ✅ Scales well for expected load of 5-6 simultaneous jobs
 
 The decision to switch to **Per Stage** in the future should be based on real workload data and the **Queue vs Executor ratio.**
