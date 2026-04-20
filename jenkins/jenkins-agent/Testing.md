@@ -10,8 +10,8 @@
 
 | Component | Static Agent VM | Docker Agent VM 01 | Docker Agent VM 02 |
 |---|---|---|---|---|
-| VM Specs | Same across all VMs | Same across all VMs | Same across all VMs | 
-| Executors | 2 executors | 2 executors | 2 executors | 
+| VM Specs | Same across all VMs | Same across all VMs | Same across all VMs |
+| Executors | 2 executors | 2 executors | 2 executors |
 | Agent Type | Static (agent any) | Docker - Per Job | Docker - Per Stage |
 
 ---
