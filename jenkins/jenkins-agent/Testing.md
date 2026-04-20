@@ -18,7 +18,7 @@
 
 ## 2. Test Results
 
-### Test 1 — Single Small Job: Static Agent vs Docker Agent
+### Test 1 — Single Small Job: Static Agent vs Docker Agent (Per Job)
 
 | Agent Type | Checkout | Build Image | CPU Load Stage | Total Time |
 |---|---|---|---|---|
@@ -29,18 +29,18 @@
 
 ---
 
-### Test 2 — Big 3 Jobs Simultaneously: Static Agent vs Docker Agent
+### Test 2 — Big 3 Jobs Simultaneously: Static Agent vs Docker Agent (Per Job)
 
 | Agent Type | Job 1 & 2 Finish | Job 3 Finish | Job 3 Wait? | Total Time |
 |---|---|---|---|---|
 | Static Agent | ~20 min | ~40 min | Yes ⏳ waits for slot | ~40 min |
-| Docker Agent | ~10 min | ~20 min | No ✅ starts immediately | **~20 min ✅ Winner** |
+| Docker Agent | ~10 min | ~20 min | Yes ⏳ waits for slot | **~20 min ✅ Winner** |
 
 > *Docker Agent completes all 3 jobs in half the time. No queuing with Docker Agent since each job gets its own container.*
 
 ---
 
-### Test 3 — Per Job vs Per Stage (2 Executors, 4 Jobs, Big Job, 4 Stages)
+### Test 3 — Docker Agnet: Per Job vs Per Stage (2 Executors, 4 Jobs, Big Job, 4 Stages)
 
 | Agent Type | Job 1 & 2 Finish | Job 3 & 4 Finish | Complexity | Total Time | Winner |
 |---|---|---|---|---|---|
@@ -51,7 +51,7 @@
 
 ---
 
-### Test 4 — Per Job vs Per Stage (2 Executors, 6 Jobs, Medium Job, 4 Stages)
+### Test 4 — Docker Agent: Per Job vs Per Stage (2 Executors, 6 Jobs, Medium Job, 4 Stages)
 
 | Agent Type | Job 1 & 2 Finish | Job 3 Finish | Complexity | Total Time | Winner |
 |---|---|---|---|---|---|
@@ -62,7 +62,7 @@
 
 ---
 
-### Test 5 — Per Job vs Per Stage (2 Executors, 6 Jobs, Medium Job, 3 Stages)
+### Test 5 — Docker Agent: Per Job vs Per Stage (2 Executors, 6 Jobs, Medium Job, 3 Stages)
 
 | Agent Type | Job 1 & 2 Finish | Job 3 Finish | Complexity | Total Time | Winner |
 |---|---|---|---|---|---|
