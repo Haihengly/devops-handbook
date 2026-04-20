@@ -109,7 +109,7 @@
 
 ## Conclusion
 
-Based on POC testing across multiple scenarios — **Docker Agent Per Job** is the recommended approach for environment.
+Based on POC testing across multiple scenarios — **Docker Agent Per Job** is the recommended.
 
 It provides:
 - ✅ Clean isolated builds per job
