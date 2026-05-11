@@ -10,8 +10,7 @@ A personal knowledge base for DevOps tools, practices, and real-world setups.
 
 * Jenkins
 * Docker *(coming soon)*
-* Kubernetes *(coming soon)*
-* CI/CD *(coming soon)*
+* Kubernetes
 
 ---
 
@@ -20,10 +19,8 @@ A personal knowledge base for DevOps tools, practices, and real-world setups.
 ```
 devops-handbook/
 ├── jenkins/
-│   └── rbac.md
 ├── docker/
 ├── kubernetes/
-├── ci-cd/
 └── README.md
 ```
 

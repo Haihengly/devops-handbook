@@ -1,4 +1,4 @@
-# Kubernetes Alerting Setup
+# Kubernetes Alerting 
 
 > This project demonstrates a Kubernetes alerting setup using Helm, Prometheus, and Alertmanager.
 
@@ -6,8 +6,8 @@
 
 ## Table of Contents
 - [Overview](#overview)
-- [Requirements](#requirements)
 - [Architecture](#architecture)
+- [What It Includes](#what-it-includes)
 - [Alerting Design](#alerting-design)
 - [Notification](#notification)
 - [Deployment Flow](#deployment-flow)
@@ -20,20 +20,27 @@
 
 This project sets up a Kubernetes monitoring and alerting system using Helm. Prometheus is used to collect and store cluster metrics, while Alertmanager handles and routes alerts. It helps detect issues like high CPU/memory usage, pod failures, and node problems, and sends real-time notifications when something goes wrong.
 
-## ⚙️ Requirements
-
-- Kubernetes cluster is running
-- Helm installed
-- Namespace monitoring exists (used for Prometheus, Alertmanager, rules)
-- kube-prometheus-stack chart
-- Basic Prometheus & Alertmanager knowledge
-- Email or Telegram or Slack for alerts notifications
-
 ---
 
 ## Architecture
 
-> Kubernetes Cluster → Prometheus (metrics collection) → Alert Rules → Alertmanager (routing) → Notifications (Telegram / Slack / Email)
+> Kubernetes Cluster → Prometheus → Alert Rules → Alertmanager → Telegram Bot (topic-based routing)
+
+---
+
+## What it includes
+
+- Prometheus for cluster metrics collection  
+- Alertmanager for alert routing and notification handling  
+- kube-prometheus-stack deployed via Helm  
+
+- Alert coverage:
+  - Node health (CPU, memory, disk usage)
+  - Pod health (CrashLoopBackOff, Pending, Restarting)
+
+- Label-based routing using `scope` and `alertgroup`  
+- Telegram bot integration with topic-based routing  
+- Go template formatting for structured alert messages  
 
 ---
 
@@ -47,20 +54,22 @@ All resources such as alert rules and configurations are managed using Kubernete
 
 ## Alerting Design
 
-Alerting is organized by scope to separate responsibilities and improve clarity.
+Alerts are organized by scope to make them easier to manage and route.
 
-- Cluster-level alerts → Monitor node and infrastructure health (e.g. node failure, resource pressure)
-- Application-level alerts → Monitor workloads and pods across namespaces (e.g. pod crash, restart loops)
+- Node alerts → infrastructure-level issues (CPU, memory, disk)  
+- Pod alerts → application-level issues (crashes, restarts, pending states)  
 
-Prometheus evaluates rules and sends alerts to Alertmanager when conditions are met.
+Alertmanager routes all alerts based on labels like `scope` and `alertgroup`, ensuring each alert goes to the correct destination.
 
 ---
 
 ## Notification
 
-Alertmanager sends alerts to external channels such as Telegram, Slack, or email.
+Alertmanager sends alerts to a Telegram bot for real-time monitoring.
 
-This ensures real-time visibility when issues occur in the cluster.
+Alerts are routed into a Telegram group using topic-based routing, allowing separation of alerts by category (CPU, RAM, Disk, Pod, etc.).
+
+This improves clarity and makes it easier to track specific system issues in real time.
 
 ---
 
@@ -92,3 +101,9 @@ This ensures real-time visibility when issues occur in the cluster.
 - [Setup Guide](./setup.md)
 - [Alert Rules](./rules.md)        
 - [Trouble Shooting](./troubleshooting.md)      
+
+---
+
+## Repository
+
+- GitHub Repository: https://github.com/Haihengly/k8s-alerting-platform

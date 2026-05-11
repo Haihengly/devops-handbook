@@ -4,6 +4,7 @@
 
 ## Table of Contents
 - [Prerequisites](#prerequisites)
+- [Deployment Flow](#deployment-flow)
 - [Install kube-prometheus-stack](#install-kube-prometheus-stack)
 - [Apply Secrets](#apply-secrets)
 - [Configure Alertmanager](#configure-alertmanager)
@@ -19,6 +20,16 @@
 - Helm installed
 - `kubectl` configured and connected to cluster
 - Telegram bot created with bot token and chat ID ready
+
+---
+
+## Deployment Flow
+
+1. Install kube-prometheus-stack using Helm  
+2. Verify Prometheus and Alertmanager pods are running  
+3. Apply PrometheusRule manifests  
+4. Configure Alertmanager routing rules  
+5. Enable notification channels  
 
 ---
 
