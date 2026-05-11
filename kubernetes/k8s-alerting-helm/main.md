@@ -4,6 +4,18 @@
 
 ---
 
+## Table of Contents
+- [Overview](#overview)
+- [Requirements](#requirements)
+- [Architecture](#architecture)
+- [Alerting Design](#alerting-design)
+- [Notification](#notification)
+- [Deployment Flow](#deployment-flow)
+- [Documentation](#documentation)
+- [Notes](#notes)
+
+---
+
 ## Overview
 
 This project sets up a Kubernetes monitoring and alerting system using Helm. Prometheus is used to collect and store cluster metrics, while Alertmanager handles and routes alerts. It helps detect issues like high CPU/memory usage, pod failures, and node problems, and sends real-time notifications when something goes wrong.
@@ -73,3 +85,10 @@ This ensures real-time visibility when issues occur in the cluster.
 - All monitoring is managed using Helm for easier upgrades and maintenance
 - Alerts are grouped and routed to reduce noise
 - System is designed for scalability across multiple namespaces
+
+---
+
+## Documentation
+- [Setup Guide](./setup.md)
+- [Alert Rules](./rules.md)        
+- [Trouble Shooting](./troubleshooting.md)      
