@@ -318,3 +318,5 @@ kubectl get pod,configmap,deployment,svc,secret -n <your-name-space>
 kubectl rollout restart deployment argocd-repo-server -n argocd
 kubectl rollout status deployment argocd-repo-server -n argocd
 ```
+
+Repository : https://github.com/Haihengly/Helm-Platform.git
