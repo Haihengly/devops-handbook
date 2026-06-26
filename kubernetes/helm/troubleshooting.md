@@ -39,12 +39,6 @@ This document lists common issues and how to identify them in a Helm + ArgoCD se
 - A `list` generator has a typo in `service`, `env`, or `repository` that silently produces a malformed Application name or path
 - Forgot `CreateNamespace=true` in `syncOptions`, so the Application fails because the target namespace doesn't exist yet
 
-## Registry Accepts a Push That Shouldn't Have Worked
-
-- Self-hosted `registry:2` does not enforce tag/version immutability by default — pushing the same version twice with different content silently overwrites it, no error or warning
-- This is a registry policy choice, not a Helm/OCI spec requirement — managed registries often behave differently
-- If this happens unintentionally, any cached copy of that version elsewhere (a teammate's machine, a different ArgoCD instance) has no way to know the content changed underneath the same version tag
-
 ## General Debug Checklist
 
 Check the secret ArgoCD is actually using:
