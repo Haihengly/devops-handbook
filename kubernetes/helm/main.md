@@ -9,9 +9,9 @@ This project demonstrates how to structure Helm charts and environment-specific 
 - [What It Includes](#what-it-includes)
 - [Chart Design](#chart-design)
 - [Environment Management](#environment-management)
-- [Deployment Flow](#deployment-flow)
-- [Documentation](#documentation)
+- [Work Flow](#work-flow)
 - [Notes](#notes)
+- [Documentation](#documentation)
 
 ## Overview
 
@@ -51,7 +51,7 @@ Each environment (dev, uat) gets its own values file, layered on top of the char
 - `helm template . -f path to env file` renders the chart for a specific environment locally, before anything touches the cluster
 - ArgoCD's `ApplicationSet` automates this per service, per environment, using a generator (`list` or `matrix`) to avoid hand-writing one Application file per combination
 
-## Deployment Flow
+## Work Flow
 
 1. Write/update the chart's templates (structure only)
 2. Write/update the environment's values file (`values/dev.yaml`, `values/uat.yaml`)

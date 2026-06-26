@@ -4,11 +4,11 @@
 
 - [Prerequisites](#prerequisites)
 - [Deployment Flow](#deployment-flow)
-- [Chart Structure](#chart-structure)
+- [ArgoCD Secret](#create-secret-for-argocd)
 - [Build the Library Chart](#build-the-library-chart)
+- [Push the Library Chart to the Registry](#push-the-library-chart-to-the-registry)
 - [Build a Service Chart](#build-a-service-chart)
 - [Render Locally with Helm Template](#render-locally-with-helm-template)
-- [Push the Library Chart to the Registry](#push-the-library-chart-to-the-registry)
 - [Set Up the ArgoCD ApplicationSet](#set-up-the-argocd-applicationset)
 - [Verify Everything](#verify-everything)
 - [Notes](#notes)
