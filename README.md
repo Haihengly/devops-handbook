@@ -1,4 +1,4 @@
-# 🔁 DevOps Handbook
+# DevOps Handbook
 
 A personal knowledge base for DevOps tools, practices, and real-world setups.
 
@@ -6,7 +6,7 @@ A personal knowledge base for DevOps tools, practices, and real-world setups.
 
 ---
 
-## 📚 Contents
+## Contents
 
 * Jenkins
 * Docker *(coming soon)*
@@ -14,7 +14,7 @@ A personal knowledge base for DevOps tools, practices, and real-world setups.
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 devops-handbook/
@@ -26,7 +26,7 @@ devops-handbook/
 
 ---
 
-## 🎯 Purpose
+## Purpose
 
 This repository is created to:
 
@@ -36,6 +36,6 @@ This repository is created to:
 
 ---
 
-## 🧠 Note
+## Note
 
 Most examples are based on real-world usage and may evolve over time.
