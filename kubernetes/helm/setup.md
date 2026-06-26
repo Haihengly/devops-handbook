@@ -32,31 +32,70 @@
 6. Set up an ArgoCD `ApplicationSet` to generate one Application per service and environment
 7. Push everything to git and let ArgoCD sync
 
-## Chart Structure
+# Create Secret for ArgoCD
 
-A service chart and its values live together in one repo:
+To let argocd access private registry you need credential.
+
+Create file for secret anywhere
 
 ```
-<service>/
-├── Chart.yaml
-├── templates/
-│   ├── deployment.yaml      # hand-written, specific to this service
-│   ├── service.yaml         # includes the shared library chart
-│   └── secret.yaml          # includes the shared library chart
-├── values.yaml               # defaults only, not real environment config
-└── values/
-    ├── dev.yaml
-    └── uat.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: oci-registry
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: repository
+stringData:
+  type: helm
+  name: oci-private-registry
+  url: <your-registry>/charts
+  enableOCI: "true"
+  username: <your-registry-username>
+  password: <your-registry-password>
 ```
 
-The chart itself never knows which environment it's being deployed to. Everything environment-specific lives in `values/`, not in `templates/`.
+> Replace stringData with data for base64.
+
+Apply : 
+
+```
+kubectl apply -f <your-file-name>
+```
+
+Verify : 
+
+```
+kubectl get secret -n argocd
+or
+kubectl get secrets -n argocd -l argocd.argoproj.io/secret-type=repository
+```
+
+Restart argocd-repo-server :
+
+```
+kubectl rollout restart deployment argocd-repo-server -n argocd
+kubectl rollout status deployment argocd-repo-server -n argocd
+```
 
 ## Build the Library Chart
 
-Create the chart and mark it as a library:
+Structure
 
 ```
-helm create service-template
+library/
+├── service/
+│    ├── Chart.yaml
+│    └── templates/
+│        └── -service.yaml                
+├── secret/
+│    ├── Chart.yaml
+│    └── templates/
+│        └── -secret.yaml 
+└── <N-template>/
+     ├── Chart.yaml
+     └── templates/
+         └── -<N>.yaml 
 ```
 
 In `service-template/Chart.yaml`, set:
@@ -68,78 +107,29 @@ version: 1.0.0
 type: library
 ```
 
-Inside `service-template/templates/`, define the shared resource as a named template rather than a normal output file. Files meant to be included (not rendered directly) conventionally start with an underscore:
+Inside `service-template/templates/`, define the shared resource as a named template rather than a normal output file. Files meant to be included (not rendered directly)
 
 ```yaml
-# service-template/templates/_service.yaml
 {{- define "service-template.service" -}}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.name }}-svc
+  name: {{ .Values.app.name }}
+  labels:
+    app: {{ .Values.app.name }}
+
 spec:
+  type: {{ .Values.service.type | default "ClusterIP" }}
+
   selector:
-    app: {{ .Values.name }}
+    app: {{ .Values.app.name }}
+
   ports:
-    - port: {{ .Values.port | default 80 }}
-{{- end -}}
-```
-
-## Build a Service Chart
-
-```
-helm create api
-```
-
-In `api/Chart.yaml`, declare the library chart as a dependency:
-
-```yaml
-apiVersion: v2
-name: api
-version: 1.0.0
-
-dependencies:
-  - name: service-template
-    version: 1.0.0
-    repository: oci://<your-registry>/charts
-```
-
-Pull the dependency down:
-
-```
-cd api
-helm dependency update
-```
-
-Reference the shared template from inside the service chart's own templates:
-
-```yaml
-# api/templates/service.yaml
-{{ include "service-template.service" . }}
-```
-
-Write `api/templates/deployment.yaml` by hand — this part is specific to the service and isn't shared.
-
-## Render Locally with Helm Template
-
-Before pushing anything, confirm the chart renders correctly for a given environment:
-
-```
-helm template . -f values/dev.yaml
-```
-
-This only prints the resulting YAML to the terminal. It doesn't touch the cluster, so it's safe to run as often as needed while iterating.
-
-To check just one resource:
-
-```
-helm template . -f values/dev.yaml --show-only templates/deployment.yaml
-```
-
-To combine the chart's own defaults with an environment override (later file wins on any overlapping key):
-
-```
-helm template . -f values.yaml -f values/dev.yaml
+    - port: {{ .Values.service.port }}
+      protocol: {{ .Values.service.protocol | default "TCP" }}
+      targetPort: {{ .Values.service.targetPort }}
+      nodePort: {{ .Values.service.nodePort }}
+{{- end }}
 ```
 
 ## Push the Library Chart to the Registry
@@ -149,10 +139,94 @@ Log in, package, and push:
 ```
 helm registry login <your-registry> -u <username> -p <password>
 helm package ./service-template
+```
+#you will get package name service-template-1.0.0.tgz (build from Chart.yaml and ./templates)
+```
 helm push service-template-1.0.0.tgz oci://<your-registry>/charts
 ```
 
-Only the library chart needs to be pushed this way. Service charts like `api` stay in git and get pulled by ArgoCD directly from there.
+Only the library chart needs to be pushed this way. The charts itself stay in git and get pulled by ArgoCD directly from there.
+
+## Build a Service Chart
+
+> Structure
+
+A service chart and its values live together in one repo:
+
+```
+<service>/
+├── Chart.yaml
+├── templates/
+│   ├── deployment.yaml      # hand-written, specific to this service
+│   ├── service.yaml         # includes the shared library chart
+│   └── secret.yaml          # includes the shared library chart
+├── values.yaml               # defaults only, not real environment config
+└── CUSTOM-FOLDER/
+    ├── dev.yaml
+    └── uat.yaml
+```
+
+The chart itself never knows which environment it's being deployed to. Everything environment-specific lives in `CUSTOM-FOLDER/`, not in `templates/`.
+
+> Now Create Your Chart 
+
+```
+helm create <your-service-name>
+```
+
+In `<your-service-name>/Chart.yaml`, declare the library chart as a dependency:
+
+```yaml
+apiVersion: v2
+name: <your-service-name>
+version: 1.0.0
+
+dependencies:
+  - name: <your-template-name>
+    version: 1.0.0
+    repository: oci://<your-registry>/charts
+```
+
+Pull the dependency down:
+
+```
+cd ./<your-service-name>
+helm dependency build
+```
+`use helm dependency update if chart version change or chart being update`
+
+Reference the shared template from inside the service chart's own templates:
+
+```yaml
+# <your-service-name>/templates/service.yaml
+{{ include "service-template.service" . }}
+```
+
+`can be also include directly inside deployment.yaml`
+
+In `<your-service-name>/templates/deployment.yaml` manual writing, this part is specific to the service and isn't shared.
+
+## Render Locally with Helm Template
+
+Before pushing anything, confirm the chart renders correctly for a given environment:
+
+```
+helm template . -f CUSTOM-FOLDER/dev.yaml
+```
+
+This only prints the resulting YAML to the terminal. It doesn't touch the cluster, so it's safe to run as often as needed while iterating.
+
+To check just one resource:
+
+```
+helm template . -f CUSTOM-FOLDER/dev.yaml --show-only templates/deployment.yaml
+```
+
+To combine the chart's own defaults with an environment override (later file wins on any overlapping key):
+
+```
+helm template . -f values.yaml -f CUSTOM-FOLDER/dev.yaml
+```
 
 ## Set Up the ArgoCD ApplicationSet
 
@@ -168,14 +242,22 @@ spec:
   generators:
     - list:
         elements:
-          - service: api
-            repository: <api-repo-url>
+          - service: <service-01>
+            repository: <service-01-repo-url>
             env: dev
-            namespace: <project>-dev
-          - service: api
-            repository: <api-repo-url>
+            namespace: <your-namespace>
+          - service: <service-01>
+            repository: <service-01-repo-url>
             env: uat
-            namespace: <project>-uat
+            namespace: <your-namespace>
+          - service: <service-02>
+            repository: <service-02-repo-url>
+            env: dev
+            namespace: <your-namespace>
+          - service: <service-02>
+            repository: <service-02-repo-url>
+            env: uat
+            namespace: <your-namespace>
 
   template:
     metadata:
@@ -185,10 +267,10 @@ spec:
       source:
         repoURL: "{{repository}}"
         targetRevision: master
-        path: "."
+        path: "." # path to the chart
         helm:
           valueFiles:
-            - "values/{{env}}.yaml"
+            - "CUSTOM-FOLDER/{{env}}.yaml" # path to to env vlaues 
       destination:
         server: https://kubernetes.default.svc
         namespace: "{{namespace}}"
@@ -203,7 +285,7 @@ spec:
 Apply it:
 
 ```
-kubectl apply -f <project-name>-applicationset.yaml
+kubectl apply -f <your-file-name>.yaml
 ```
 
 ## Verify Everything
@@ -220,16 +302,10 @@ Check a specific Application's sync and health status:
 kubectl get application <service>-<env> -n argocd -o jsonpath='{.status.sync.status}{"\n"}{.status.health.status}{"\n"}'
 ```
 
-Check the repo-server actually pulled the library chart dependency without errors:
-
-```
-kubectl logs -n argocd deploy/argocd-repo-server --tail=50 | grep -i <library-chart-name>
-```
-
 Confirm the rendered output in the cluster matches what `helm template` produced locally:
 
 ```
-kubectl get deployment,service,secret -n <project>-dev
+kubectl get pod,configmap,deployment,svc,secret -n <your-name-space>
 ```
 
 ## Notes
@@ -242,5 +318,3 @@ kubectl get deployment,service,secret -n <project>-dev
 kubectl rollout restart deployment argocd-repo-server -n argocd
 kubectl rollout status deployment argocd-repo-server -n argocd
 ```
-
-- If a sync seems to ignore a fix that was just applied, check for `(cached)` in the error message — that means a hard refresh is needed, not another edit
