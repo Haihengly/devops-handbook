@@ -1,4 +1,4 @@
-# Helm Management
+# Helm Template and Environment Management
 
 This project demonstrates how to structure Helm charts and environment-specific values so the same chart can be rendered and deployed consistently across multiple environments (dev, uat) using ArgoCD.
 
