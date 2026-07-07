@@ -1,80 +1,69 @@
-# Argo CD Image Updater — GitOps Automated Deployment
+# Argo CD Image Updater
 
-This project demonstrates an automated image tag update pipeline using Argo CD, Argo CD Image Updater, and GitLab, replacing manual Jenkins-based manifest updates with a fully GitOps-driven flow.
+This project sets up automatic image tag updates using Argo CD Image Updater and GitLab. Instead of Jenkins manually updating the manifest repo, Image Updater watches the image registry and updates the tag by itself.
 
 ## Table of Contents
 - [Overview](#overview)
 - [Architecture](#architecture)
 - [What It Includes](#what-it-includes)
-- [Update Strategy Design](#update-strategy-design)
-- [Write-Back Flow](#write-back-flow)
-- [Monitoring](#monitoring)
+- [Update Strategy](#update-strategy)
+- [How It Works](#how-it-works)
 - [Deployment Flow](#deployment-flow)
 - [Documentation](#documentation)
 - [Notes](#notes)
 
 ## Overview
-This project automates image tag updates for Kubernetes workloads deployed via Argo CD. Instead of a CI pipeline manually checking out the manifest repo, editing the tag, and pushing a commit, Argo CD Image Updater watches the container registry directly and commits tag changes to Git on its own. Argo CD then syncs the change automatically, completing a fully GitOps-driven deployment loop.
+Before, Jenkins had to checkout the manifest repo, update the image tag, and push it back to Git. Now, Argo CD Image Updater does this automatically. It watches the image registry, and when a new tag shows up, it updates the Git repo itself. Argo CD then syncs the change like normal.
 
 ## Architecture
 ```
-Container Registry → Image Updater Controller → Git Repository (GitLab) → Argo CD Sync → Kubernetes Deployment
+Image Registry → Image Updater → Git Repo (GitLab) → Argo CD Sync → Kubernetes
 ```
 
 ## What It Includes
-- Argo CD Image Updater controller (CRD-based, `v1.2.2`)
-- ApplicationSet-driven multi-environment deployment (dev / uat)
-- Private registry authentication via `pull-secret`
-- Git write-back authentication via dedicated GitLab credentials
-- `ImageUpdater` CR with global `namePattern` coverage
-- Custom Git commit message templating for audit-friendly history
-- Prometheus metrics integration for observability
+- Argo CD Image Updater controller (`v1.2.2`)
+- ApplicationSet for dev and uat environments
+- Private registry login using a pull-secret
+- Git credentials so it can push tag updates
+- One `ImageUpdater` CR that covers every app
+- Custom commit message so Git history is easy to read
 
-## Update Strategy Design
-Image tags are plain incrementing build numbers (not semver), so the `newest-build` strategy is used — it selects the image with the most recent registry push timestamp rather than relying on tag-name sorting.
+## Update Strategy
+Our image tags are just plain numbers (1, 2, 3...), not version numbers like `v1.2.0`. So we use the `newest-build` strategy — it picks whichever image was pushed most recently, instead of sorting by tag name.
 
-| Strategy | Use Case |
+| Strategy | When to use |
 |---|---|
-| `newest-build` | Plain/incrementing tags, most recent push wins (used here) |
-| `semver` | Tags following `X.Y.Z` format |
-| `digest` | Pin to a specific immutable image digest |
+| `newest-build` | Plain/incrementing tag numbers (what we use) |
+| `semver` | Tags like `1.2.0` |
+| `digest` | Only update to one specific image, manually |
 
-**Known limitation:** if the currently deployed tag is deleted from the registry, the strategy automatically falls back to the next newest available tag on the following poll cycle, with no approval step. Currently-deployed tags should never be deleted — see [Troubleshooting](./troubleshooting.md).
+**Important:** if someone deletes the currently deployed tag, Image Updater will automatically go back to the next available tag on its own — no warning, no approval. So never delete the tag that's currently deployed. See [Troubleshooting](./troubleshooting.md).
 
-## Write-Back Flow
-Image Updater writes tag updates directly into each environment's existing Helm values file (`env/dev.yaml`, `env/uat.yaml`) rather than creating a separate override file, keeping the deployed version visible in one place.
+## How It Works
+Image Updater edits the environment's values file directly (`env/dev.yaml`, `env/uat.yaml`), so the current tag is always visible in one place.
 
 ```
-1. Registry polled every ~2 min
-2. New tag detected → matches update strategy
-3. Repo cloned using Argo CD's registered git credential
-4. env/{env}.yaml updated directly (helmvalues write-back target)
-5. Commit pushed to master (custom commit message template)
-6. Argo CD detects new commit → auto-syncs (selfHeal + automated)
+1. Checks the registry every ~2 minutes
+2. Finds a new tag
+3. Clones the Git repo
+4. Updates env/{env}.yaml with the new tag
+5. Commits and pushes to master
+6. Argo CD sees the new commit and syncs automatically
 ```
-
-## Monitoring
-Image Updater exposes Prometheus metrics for observability, since update failures (bad credentials, registry auth, git push rejections) fail silently in the background otherwise.
-
-- `argocd_image_updater_images_errors_total` — failed update attempts
-- `argocd_image_updater_images_updated_total` — successful updates
-- `argocd_image_updater_applications_watched_total` — apps currently tracked
-
-Metrics require RBAC access granted to Prometheus's ServiceAccount against the controller's `metrics-reader` / `metrics-auth` ClusterRoleBindings — see [Setup Guide](./setup.md).
 
 ## Deployment Flow
-1. Install Argo CD Image Updater controller
-2. Configure private registry and Git credentials
-3. Apply `ImageUpdater` CR (global `namePattern: "*"`, `useAnnotations: true`)
-4. Add Image Updater annotations to each Application/ApplicationSet template
-5. Grant GitLab protected-branch push access to the credential in use
-6. Verify end-to-end with a test tag push
+1. Install Image Updater
+2. Set up registry login and Git credentials
+3. Apply the `ImageUpdater` CR
+4. Add Image Updater annotations to the Application
+5. Allow the Git credential to push to the protected branch
+6. Test by pushing a new tag and checking it updates correctly
 
 ## Notes
-- Currently scoped to **dev and uat only** — not yet promoted to production
-- One shared `ImageUpdater` CR covers all applications; onboarding a new service only requires adding annotations, no CR changes
-- Rollbacks require both a Git revert **and** an `ignore-tags` annotation to prevent the controller from re-promoting a reverted tag — see [Troubleshooting](./troubleshooting.md)
-- Designed to scale across ~30 microservices without per-service pipeline duplication
+- Only used in **dev and uat** for now, not production yet
+- One `ImageUpdater` CR covers every app — adding a new service just means adding annotations, no CR changes needed
+- To roll back, you need to both revert the Git commit **and** add an `ignore-tags` annotation, or Image Updater will just re-apply the same tag again. See [Troubleshooting](./troubleshooting.md)
+- Built with the goal of scaling to around 30 services without repeating pipeline code for each one
 
 ## Documentation
 - [Setup Guide](./setup.md)
