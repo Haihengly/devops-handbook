@@ -59,6 +59,3 @@ Image Updater edits the environment's values file directly (`what ever your cust
 ## Documentation
 - [Setup Guide](./setup.md)
 - [Troubleshooting](./troubleshooting.md)
-
-## Repository
-GitHub Repository: 
