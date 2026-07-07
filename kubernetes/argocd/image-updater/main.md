@@ -8,7 +8,6 @@ This project sets up automatic image tag updates using Argo CD Image Updater and
 - [What It Includes](#what-it-includes)
 - [Update Strategy](#update-strategy)
 - [How It Works](#how-it-works)
-- [Deployment Flow](#deployment-flow)
 - [Documentation](#documentation)
 - [Notes](#notes)
 
@@ -50,14 +49,6 @@ Image Updater edits the environment's values file directly (`what ever your cust
 5. Commits and pushes to git
 6. Argo CD sees the new commit and syncs automatically
 ```
-
-## Deployment Flow
-1. Install Image Updater
-2. Set up registry login and Git credentials
-3. Apply the `ImageUpdater` CR
-4. Add Image Updater annotations to the Application or Applicationset
-5. Allow the Git credential to push to the protected branch
-6. Test by pushing a new tag and checking it updates correctly
 
 ## Notes
 - Only used in **dev and uat** for now, not production yet
