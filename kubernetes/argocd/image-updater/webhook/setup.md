@@ -449,4 +449,4 @@ Look for the relay forwarding the event, Image Updater processing the webhook, a
 kubectl get application YOUR_APPLICATION_NAME -n argocd -o jsonpath='{.status.summary.images}'
 ```
 
-If something doesn't work, check Troubleshooting.
+If something doesn't work, check [Troubleshooting](./troubleshooting.md).
