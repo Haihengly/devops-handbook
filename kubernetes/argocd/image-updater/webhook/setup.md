@@ -40,6 +40,7 @@ kubectl patch configmap argocd-image-updater-config -n argocd --type merge -p '{
 
 Or edit manually:
 ```bash
+export KUBE_EDITOR=nano
 kubectl edit configmap argocd-image-updater-config -n argocd
 ```
 Add:
@@ -68,6 +69,7 @@ kubectl patch deployment argocd-image-updater-controller -n argocd --type='json'
 
 Or edit manually:
 ```bash
+export KUBE_EDITOR=nano
 kubectl edit deployment argocd-image-updater-controller -n argocd
 ```
 Find `args:` under the container spec and update it to:
@@ -132,6 +134,7 @@ kubectl patch deployment argocd-image-updater-controller -n argocd --type='json'
 
 Or edit manually:
 ```bash
+export KUBE_EDITOR=nano
 kubectl edit deployment argocd-image-updater-controller -n argocd
 ```
 Find `Kind: Deployment` and add this under `spec.template.spec`, at the same level as `containers:`:
@@ -195,6 +198,7 @@ If one exists and only allows metrics traffic, add the webhook port as its own s
 
 Edit manually:
 ```bash
+export KUBE_EDITOR=nano
 kubectl edit networkpolicy YOUR_POLICY_NAME -n argocd
 ```
 ```yaml
@@ -205,13 +209,8 @@ spec:
     - port: 8443
       protocol: TCP
   - ports:                 # new, separate rule
-    - port: 8082
+    - port: YOUR_CUSTOM_PORT #match webhook.port on config map
       protocol: TCP
-```
-
-Or write it as YAML and apply:
-```bash
-kubectl apply -f YOUR_NETWORKPOLICY_FILE.yaml
 ```
 
 Verify both rules are live:
@@ -221,19 +220,135 @@ kubectl get networkpolicy YOUR_POLICY_NAME -n argocd -o yaml
 
 ## Build and Run the Relay
 
-A small Node/Express app that receives the registry's native push notification and forwards it to Image Updater in the format its webhook expects.
+A small Node/Express app that receives the registry's native push notification, transforms it into the payload format Image Updater's webhook expects, and forwards it.
 
-Key points:
-- Must explicitly accept the registry's content type:
-```js
+Project structure:
+```
+registry-relay/
+├── docker-compose.yml
+├── Dockerfile
+├── package.json
+├── server.js
+└── .env
+```
+
+**`package.json`**
+```json
+{
+  "name": "registry-relay",
+  "version": "1.0.0",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
+```
+
+**`Dockerfile`**
+```dockerfile
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package.json .
+RUN npm install --production
+
+COPY server.js .
+
+EXPOSE 3031
+
+CMD ["node", "server.js"]
+```
+
+**`server.js`**
+```javascript
+const express = require('express');
+const app = express();
+
 app.use(express.json({
   type: ['application/json', 'application/vnd.docker.distribution.events.v1+json']
 }));
-```
-- Only forward `action: "push"` events that have a tag (skip untagged/digest-only pushes)
-- Forward with the shared secret in the `Authorization` header
 
-Run persistently with Docker Compose:
+const HARBOR_SECRET = process.env.HARBOR_WEBHOOK_SECRET;
+if (!HARBOR_SECRET) {
+  console.error('FATAL: HARBOR_WEBHOOK_SECRET not set');
+  process.exit(1);
+}
+
+const IMAGE_UPDATER_URL = process.env.IMAGE_UPDATER_URL;
+if (!IMAGE_UPDATER_URL) {
+  console.error('FATAL: IMAGE_UPDATER_URL not set');
+  process.exit(1);
+}
+
+const REGISTRY_HOST = process.env.REGISTRY_HOST;
+if (!REGISTRY_HOST) {
+  console.error('FATAL: REGISTRY_HOST not set');
+  process.exit(1);
+}
+
+app.post('/notify', async (req, res) => {
+  try {
+    const events = req.body.events || [];
+
+    for (const event of events) {
+      if (event.action !== 'push') continue;
+      if (!event.target?.tag) continue; // skip untagged/digest-only pushes
+
+      const repoFull = event.target.repository; // e.g. "namespace/repo"
+      const slashIdx = repoFull.indexOf('/');
+      const namespace = slashIdx !== -1 ? repoFull.slice(0, slashIdx) : '';
+      const name = slashIdx !== -1 ? repoFull.slice(slashIdx + 1) : repoFull;
+
+      const harborPayload = {
+        type: 'PUSH_ARTIFACT',
+        occur_at: Math.floor(Date.now() / 1000),
+        operator: event.actor?.name || 'registry',
+        event_data: {
+          resources: [
+            {
+              digest: event.target.digest,
+              tag: event.target.tag,
+              resource_url: `${REGISTRY_HOST}/${repoFull}:${event.target.tag}`
+            }
+          ],
+          repository: {
+            name,
+            namespace,
+            repo_full_name: repoFull
+          }
+        }
+      };
+
+      console.log(`Push detected: ${repoFull}:${event.target.tag} -> forwarding to Image Updater`);
+
+      const resp = await fetch(IMAGE_UPDATER_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': HARBOR_SECRET
+        },
+        body: JSON.stringify(harborPayload)
+      });
+
+      console.log(`Image Updater response: ${resp.status}`);
+      if (!resp.ok) {
+        console.error(`Rejected: ${await resp.text()}`);
+      }
+    }
+
+    res.status(200).json({ status: 'ok' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'failed to forward event' });
+  }
+});
+
+app.get('/healthz', (req, res) => res.status(200).send('ok'));
+
+app.listen(3031, () => console.log('Relay listening on 3031'));
+```
+
+**`docker-compose.yml`**
 ```yaml
 services:
   registry-relay:
@@ -243,13 +358,29 @@ services:
     ports:
       - "3031:3031"
     environment:
-      HARBOR_WEBHOOK_SECRET: "YOUR_SHARED_SECRET"
-      IMAGE_UPDATER_URL: "http://YOUR_WEBHOOK_ENDPOINT/webhook?type=harbor"
-      REGISTRY_HOST: "YOUR_REGISTRY_HOST"
+      HARBOR_WEBHOOK_SECRET: ${HARBOR_WEBHOOK_SECRET}
+      IMAGE_UPDATER_URL: ${IMAGE_UPDATER_URL}
+      REGISTRY_HOST: ${REGISTRY_HOST}
 ```
+
+**`.env`** (same folder, keep out of git)
+```
+HARBOR_WEBHOOK_SECRET=YOUR_SHARED_SECRET
+IMAGE_UPDATER_URL=http://YOUR_WEBHOOK_ENDPOINT/webhook?type=harbor
+REGISTRY_HOST=YOUR_REGISTRY_HOST
+```
+
+Run it:
 ```bash
 docker compose up -d --build
 ```
+
+Check it's running:
+```bash
+docker compose ps
+docker compose logs -f registry-relay
+```
+
 
 ## Configure the Registry
 
