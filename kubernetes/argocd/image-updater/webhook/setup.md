@@ -1,52 +1,159 @@
 # Webhook Setup Guide
 
-## 1. Enable the webhook listener on Image Updater
+## Table of Contents
+- Prerequisites
+- Deployment Flow
+- Enable Webhook on Image Updater
+- Fix DNS
+- Expose the Webhook Port
+- Allow Webhook Traffic
+- Build and Run the Relay
+- Configure the Registry
+- Configure Application Annotations
+- Verify Everything
+- Test Update
 
-**ConfigMap** (`argocd-image-updater-config`):
+## Prerequisites
+
+- Argo CD Image Updater is already installed and working (polling mode) — see [Image Updater Setup Guide](../setup.md)
+- `kubectl` configured and connected to the cluster
+- Access to edit the registry's `config.yml`
+- A machine to run the relay (Docker + Docker Compose)
+
+## Deployment Flow
+
+1. Enable the webhook listener on Image Updater
+2. Fix DNS if the registry host isn't resolvable
+3. Expose the webhook port via a Service
+4. Allow the webhook port through NetworkPolicy
+5. Build and run the relay
+6. Point the registry's notifications at the relay
+7. Configure Application annotations to match
+8. Verify and test
+
+## Enable Webhook on Image Updater
+
+Patch the ConfigMap:
+```bash
+kubectl patch configmap argocd-image-updater-config -n argocd --type merge -p '{"data":{"webhook.enable":"true","webhook.port":"8082"}}'
+```
+
+Or edit manually:
+```bash
+kubectl edit configmap argocd-image-updater-config -n argocd
+```
+Add:
 ```yaml
 data:
   webhook.enable: "true"
-  webhook.port: "8082"
+  webhook.port: "YOUR_CUSTOM_PORT"
   registries.conf: |
     registries:
-      - name: <Registry Name>
-        prefix: <registry-host>:<port>
-        api_url: http://<registry-host>:<port>
+      - name: YOUR_REGISTRY_NAME
+        prefix: YOUR_REGISTRY_HOST:PORT
+        api_url: http://YOUR_REGISTRY_HOST:PORT
         insecure: yes
 ```
 `registries.conf` is only needed if the registry serves plain HTTP instead of HTTPS.
 
-**Deployment args**:
-```
---enable-webhook
---disable-tls
---interval=6h
-```
-(`--interval` is the polling fallback — set it long since the webhook now handles real-time updates)
+Add the webhook flags to the Deployment args, and set a longer polling fallback since the webhook now handles real-time updates.
 
-**Secret** (`argocd-image-updater-secret`):
-```yaml
-stringData:
-  webhook.harbor-secret: <shared-secret>
-```
-
-If the registry's domain isn't resolvable by cluster DNS, add a `hostAliases` entry to the deployment:
-```yaml
-spec:
-  template:
-    spec:
-      hostAliases:
-        - ip: "<registry-host-ip>"
-          hostnames: ["<registry-domain>"]
-```
-
-Apply and restart:
+Patch:
 ```bash
-kubectl apply -f install-image-updater.yaml -n argocd
+kubectl patch deployment argocd-image-updater-controller -n argocd --type='json' -p='[
+  {"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--enable-webhook"},
+  {"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--disable-tls"}
+]'
+```
+
+Or edit manually:
+```bash
+kubectl edit deployment argocd-image-updater-controller -n argocd
+```
+Find `args:` under the container spec and update it to:
+```yaml
+args:
+  - --metrics-bind-address=:8443
+  - run
+  - --interval=6h
+  - --enable-webhook
+  - --disable-tls
+```
+
+Add the shared secret Image Updater checks against:
+
+Using kubectl create:
+```bash
+kubectl create secret generic argocd-image-updater-secret -n argocd \
+  --from-literal=webhook.harbor-secret=YOUR_SHARED_SECRET \
+  --dry-run=client -o yaml | kubectl apply -f -
+```
+
+Or write it as YAML and apply:
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: argocd-image-updater-secret
+  namespace: argocd
+type: Opaque
+stringData:
+  webhook.harbor-secret: YOUR_SHARED_SECRET
+```
+```bash
+kubectl apply -f YOUR_SECRET_FILE.yaml
+```
+
+Restart :
+```bash
 kubectl rollout restart deployment argocd-image-updater-controller -n argocd
 ```
 
-## 2. Expose the webhook port
+## Fix DNS
+
+Check if the controller can resolve the registry host:
+```bash
+kubectl exec -it -n argocd deployment/argocd-image-updater-controller -- getent hosts YOUR_REGISTRY_HOST
+```
+
+If it fails, patch the deployment with a manual DNS mapping:
+```bash
+kubectl patch deployment argocd-image-updater-controller -n argocd --type='json' -p='[
+  {
+    "op": "add",
+    "path": "/spec/template/spec/hostAliases",
+    "value": [
+      {"ip": "YOUR_REGISTRY_INTERNAL_IP", "hostnames": ["YOUR_REGISTRY_HOST"]}
+    ]
+  }
+]'
+```
+**Double-check the IP is correct before applying** — a wrong IP silently routes to an unrelated service and is very hard to debug.
+
+Or edit manually:
+```bash
+kubectl edit deployment argocd-image-updater-controller -n argocd
+```
+Find `Kind: Deployment` and add this under `spec.template.spec`, at the same level as `containers:`:
+```yaml
+hostAliases:
+  - ip: "YOUR_REGISTRY_INTERNAL_IP"
+    hostnames:
+      - "YOUR_REGISTRY_HOST"
+```
+
+If a `hostAliases` entry already exists (e.g. for the Git host), add this as a second entry in the same list instead of replacing it:
+```yaml
+hostAliases:
+  - ip: "YOUR_GIT_INTERNAL_IP"
+    hostnames:
+      - "YOUR_GIT_HOST"
+  - ip: "YOUR_REGISTRY_INTERNAL_IP"
+    hostnames:
+      - "YOUR_REGISTRY_HOST"
+```
+
+## Expose the Webhook Port
 
 ```yaml
 apiVersion: v1
@@ -57,11 +164,14 @@ metadata:
 spec:
   type: NodePort
   selector:
-    app.kubernetes.io/name: argocd-image-updater   # must match the pod's actual label
+    app.kubernetes.io/name: argocd-image-updater
   ports:
-    - port: 8082
-      targetPort: 8082
-      nodePort: 30082
+    - port: YOUR_CUSTOM_PORT #must match webhook.port in config map
+      targetPort: YOUR_CUSTOM_PORT #must match webhook.port in config map
+      nodePort: NODEPORT_RANGE
+```
+```bash
+kubectl apply -f YOUR_SERVICE_FILE.yaml
 ```
 
 Confirm the selector matches the pod's real labels:
@@ -69,9 +179,24 @@ Confirm the selector matches the pod's real labels:
 kubectl get pods -n argocd --show-labels | grep image-updater
 ```
 
-## 3. Check NetworkPolicy allows the webhook port
+Confirm the Service has real endpoints:
+```bash
+kubectl get endpoints argocd-image-updater-webhook -n argocd
+```
 
-If a NetworkPolicy already restricts traffic to the Image Updater pod, add the webhook port as its own separate ingress rule:
+## Allow Webhook Traffic
+
+Check for any NetworkPolicy restricting the Image Updater pod:
+```bash
+kubectl get networkpolicy -n argocd
+```
+
+If one exists and only allows metrics traffic, add the webhook port as its own separate ingress rule (not nested inside the existing rule).
+
+Edit manually:
+```bash
+kubectl edit networkpolicy YOUR_POLICY_NAME -n argocd
+```
 ```yaml
 spec:
   ingress:
@@ -83,26 +208,32 @@ spec:
     - port: 8082
       protocol: TCP
 ```
-Apply and confirm both rules show up live:
+
+Or write it as YAML and apply:
 ```bash
-kubectl get networkpolicy <policy-name> -n argocd -o yaml
+kubectl apply -f YOUR_NETWORKPOLICY_FILE.yaml
 ```
 
-## 4. Build and run the relay
+Verify both rules are live:
+```bash
+kubectl get networkpolicy YOUR_POLICY_NAME -n argocd -o yaml
+```
+
+## Build and Run the Relay
 
 A small Node/Express app that receives the registry's native push notification and forwards it to Image Updater in the format its webhook expects.
 
 Key points:
 - Must explicitly accept the registry's content type:
-  ```js
-  app.use(express.json({
-    type: ['application/json', 'application/vnd.docker.distribution.events.v1+json']
-  }));
-  ```
-- Only forward `action: "push"` events with a tag (skip untagged/digest-only pushes)
+```js
+app.use(express.json({
+  type: ['application/json', 'application/vnd.docker.distribution.events.v1+json']
+}));
+```
+- Only forward `action: "push"` events that have a tag (skip untagged/digest-only pushes)
 - Forward with the shared secret in the `Authorization` header
 
-Run it persistently with Docker Compose:
+Run persistently with Docker Compose:
 ```yaml
 services:
   registry-relay:
@@ -112,44 +243,72 @@ services:
     ports:
       - "3031:3031"
     environment:
-      HARBOR_WEBHOOK_SECRET: ${HARBOR_WEBHOOK_SECRET}
-      IMAGE_UPDATER_URL: ${IMAGE_UPDATER_URL}
-      REGISTRY_HOST: ${REGISTRY_HOST}
+      HARBOR_WEBHOOK_SECRET: "YOUR_SHARED_SECRET"
+      IMAGE_UPDATER_URL: "http://YOUR_WEBHOOK_ENDPOINT/webhook?type=harbor"
+      REGISTRY_HOST: "YOUR_REGISTRY_HOST"
 ```
 ```bash
 docker compose up -d --build
 ```
 
-## 5. Point the registry at the relay
+## Configure the Registry
 
-In `registry:2`'s `config.yml`:
+Add to `registry:2`'s `config.yml`:
 ```yaml
 notifications:
   endpoints:
     - name: relay
-      url: http://<relay-reachable-address>:3031/notify
+      url: "http://YOUR_RELAY_ADDRESS:3031/notify"
       timeout: 2s
       threshold: 5
       backoff: 1s
 ```
 Restart the registry container to apply.
 
-## 6. Confirm the Application's image-list annotation matches
+## Configure Application Annotations
 
+Confirm the existing `image-list` annotation matches the registry path the relay sends:
 ```yaml
-argocd-image-updater.argoproj.io/image-list: ui=<registry-host>:<port>/<namespace>/<repo>
+argocd-image-updater.argoproj.io/image-list: "{{service}}=YOUR_REGISTRY_HOST:PORT/YOUR_NAMESPACE/YOUR_REPO"
 ```
-This must exactly match the repository name the relay sends, or Image Updater accepts the webhook (200 OK) but finds nothing to update.
+This must match exactly, or the webhook is accepted (200 OK) but finds nothing to update.
 
-## 7. Test end to end
-
+If this is set directly on an Application (not templated via ApplicationSet), you can also edit it manually:
 ```bash
-docker tag alpine <registry>/<namespace>/<repo>:test1
-docker push <registry>/<namespace>/<repo>:test1
+kubectl edit application YOUR_APPLICATION_NAME -n argocd
 ```
-Then check:
+
+## Verify Everything
+
+Check the relay is running without errors:
+```bash
+docker compose logs -f registry-relay
+```
+
+Check the controller is receiving webhooks:
+```bash
+kubectl logs -n argocd deployment/argocd-image-updater-controller --tail=50
+```
+
+Check the webhook endpoint responds:
+```bash
+curl http://YOUR_WEBHOOK_ENDPOINT/healthz
+```
+
+## Test Update
+
+Push a new image tag, then watch both logs:
+```bash
+docker push YOUR_REGISTRY_HOST/YOUR_NAMESPACE/YOUR_REPO:test1
+```
 ```bash
 docker compose logs -f registry-relay
 kubectl logs -n argocd deployment/argocd-image-updater-controller -f
 ```
-Look for the relay forwarding the event, Image Updater processing the webhook, and `images_updated=1` in the log line. Confirm the app updates in the Argo CD UI without waiting for the polling interval.
+
+Look for the relay forwarding the event, Image Updater processing the webhook, and `images_updated=1` in the log line. Then confirm the app updated without waiting for the polling interval:
+```bash
+kubectl get application YOUR_APPLICATION_NAME -n argocd -o jsonpath='{.status.summary.images}'
+```
+
+If something doesn't work, check Troubleshooting.
