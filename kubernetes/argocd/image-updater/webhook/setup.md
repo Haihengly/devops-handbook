@@ -384,7 +384,19 @@ docker compose logs -f registry-relay
 
 ## Configure the Registry
 
-Add to `registry:2`'s `config.yml`:
+If `config.yml` is host-mounted (check your registry's `docker-compose.yml` for a volume like `./docker/registry:/etc/docker/registry`), edit it directly on the host — no need to go into the container:
+```bash
+nano ./docker/registry/config.yml
+```
+
+If it's not mounted, copy it out of the container, edit it, then copy it back:
+```bash
+docker cp YOUR_REGISTRY_CONTAINER:/etc/docker/registry/config.yml ./config.yml
+nano ./config.yml
+docker cp ./config.yml YOUR_REGISTRY_CONTAINER:/etc/docker/registry/config.yml
+```
+
+Add the `notifications` block (same indentation level as `storage`, `http`, `health` — not nested inside any of them):
 ```yaml
 notifications:
   endpoints:
@@ -394,19 +406,14 @@ notifications:
       threshold: 5
       backoff: 1s
 ```
-Restart the registry container to apply.
 
-## Configure Application Annotations
-
-Confirm the existing `image-list` annotation matches the registry path the relay sends:
-```yaml
-argocd-image-updater.argoproj.io/image-list: "{{service}}=YOUR_REGISTRY_HOST:PORT/YOUR_NAMESPACE/YOUR_REPO"
-```
-This must match exactly, or the webhook is accepted (200 OK) but finds nothing to update.
-
-If this is set directly on an Application (not templated via ApplicationSet), you can also edit it manually:
+Restart the registry container to apply:
 ```bash
-kubectl edit application YOUR_APPLICATION_NAME -n argocd
+docker restart YOUR_REGISTRY_CONTAINER
+```
+Or if using Docker Compose:
+```bash
+docker compose restart registry
 ```
 
 ## Verify Everything
