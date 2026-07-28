@@ -16,7 +16,7 @@ This setup is split across **three repos**:
 
 | Repo | Purpose |
 |---|---|
-| `Jenkinsfile` repo | One folder per project, one Jenkinsfile per service, used with Jenkins Multibranch + "Jenkinsfile from SCM" |
+| `Jenkinsfile` repo | One folder per project, one Jenkinsfile per service, used with Jenkins Multibranch |
 | `environment-file` repo | Per-project, per-service YAML files with env-specific values (dev/uat/prod), loaded via `envLoader.groovy` |
 | `share-library` repo | The actual pipeline logic — `corePipeline` + all `stageX` / `configX` steps |
 
@@ -24,21 +24,39 @@ This setup is split across **three repos**:
 
 **Jenkinsfile repo** (per project folder):
 ```
-Jenkinsfile/DummyBank/
-├── api.jenkinsfile
-├── web.jenkinsfile
-└── script.sh
+Jenkinsfile_Repo
+├── Project_A
+│   ├── Service_A.jenkinsfile
+│   ├── Service_B.jenkinsfile
+│   └── Service_N.jenkinsfile
+├── Project_B
+│   ├── Service_A.jenkinsfile
+│   ├── Service_B.jenkinsfile
+│   └── Service_N.jenkinsfile
+└── Project_N
+    ├── Service_A.jenkinsfile
+    ├── Service_B.jenkinsfile
+    └── Service_N.jenkinsfile
 ```
 
 **environment-file repo**:
 ```
-environment-file/
+environment-file_Repo
 ├── vars/
 │   └── envLoader.groovy
 └── resources/
-    └── dummybank/
-        ├── api.yml
-        └── web.yml
+    ├── Project_A/
+    │   ├── Service_A.yml
+    │   ├── Service_B.yml
+    │   └── Service_N.yml
+    ├── Project_B/
+    │   ├── Service_A.yml
+    │   ├── Service_B.yml
+    │   └── Service_N.yml
+    └── Project_N/
+        ├── Service_A.yml
+        ├── Service_B.yml
+        └── Service_N.yml
 ```
 
 **share-library repo**:
@@ -48,9 +66,11 @@ share-library/vars/
 ├── configEnvLoader.groovy   # pulls env-specific config in
 ├── configSanitize.groovy    # normalizes stage config (e.g. enabled → real Boolean)
 ├── configValidate.groovy    # checks config is well-formed before running
+├── config_N.groovy          # config_N_thing 
 ├── stageExecutor.groovy     # routes stage type → stage function
 ├── stageCheckout.groovy     # git checkout
-└── stageDeploy.groovy       # SSH deploy via docker compose
+├── stageDeploy.groovy       # SSH deploy via docker compose
+└── stage_N.groovy           # stage_N
 ```
 
 ## How It Works (High Level)
@@ -71,17 +91,18 @@ corePipeline
 1. **Jenkinsfile** loads 3 libraries (`env-configs`, `pipeline`, `notify`), builds a `config` map:
    ```groovy
    def config = [
-       PROJECT_NAME: 'dummybank',
-       SERVICE_NAME: 'api',
-       PROJECT_URL: '',   // set to real git URL, left blank here
+       PROJECT_NAME: 'YOUR_PROJECT_NAME',
+       SERVICE_NAME: 'YOUR_SERVCICE_NAME',
+       PROJECT_URL: 'YOUR_PROJECT_REPO_URL',
        stages: [
            [name: 'Check',  type: 'check',  enabled: 'true'],
-           [name: 'Deploy', type: 'deploy', enabled: 'false']
+           [name: 'Deploy', type: 'deploy', enabled: 'false'],
+           [name: 'N', type: 'N', enabled: 'true,false,TRUE,FALSE'] # doesn't care about upercase or lowercase 
        ]
    ]
    corePipeline(config)
    ```
-   Every service's Jenkinsfile is identical in structure — only the values change.
+   Every service's Jenkinsfile is identical in structure, only the values change.
 
 2. **`configEnvLoader`** checks `PROJECT_NAME`, `SERVICE_NAME`, `PROJECT_URL` are set, then calls `envLoader.getEnv(PROJECT_NAME, SERVICE_NAME, env.BRANCH_NAME)` from the `env-configs` library. That function maps the current git branch (`main`/`uat`/`dev`) to a YAML section in `resources/<project>/<service>.yml`, and returns that section (e.g. `SERVER`, `PROJECT_PATH`, `SOURCE_BRANCH`). Those values get merged into `config`.
 
