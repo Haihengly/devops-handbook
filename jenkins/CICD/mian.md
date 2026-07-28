@@ -123,13 +123,6 @@ corePipeline
 | `check` | `stageCheckout` | ✅ implemented — GitSCM checkout using `SOURCE_BRANCH` + `PROJECT_URL` |
 | `deploy` | `stageDeploy` | ✅ implemented — SSH into `SERVER`, pull latest, `docker compose up -d --build` |
 | `build` | `stageBuild` | ⚠️ **not implemented** — referenced in registry, function doesn't exist yet |
-| `cleanup` | `stageCleanUp` | ⚠️ **not implemented** — same |
-| `test` | `stageTest` | ⚠️ **not implemented** — same |
-
-If a Jenkinsfile enables a `build`, `cleanup`, or `test` stage right now, the pipeline will fail at `stageExecutor` with an unknown-function error (not a clean "unknown stage type" — Groovy will blow up trying to call a function that doesn't exist). Keep those stages `enabled: 'false'` until the functions are written.
-
-## Status
-This library is **~60–80% complete**, functional for the core check → deploy flow across ~30 services in dev/UAT. Known gaps and rough edges are tracked in `troubleshooting.md`.
 
 ## Related Docs
 - [`setup.md`](./setup.md) — how to wire up a new service to use this library
