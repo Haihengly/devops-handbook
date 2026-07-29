@@ -98,7 +98,7 @@ prod:
 
 - Select by Remote Jenkinsfile Provider Plugin
 
-- Under Script Path point to your jenkins file path 
+- Under Script Path -> Input your path to Jenkins file
 
 - Input your Jenkins file Repository URL (Add Credentials if private)
 
