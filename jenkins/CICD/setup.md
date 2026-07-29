@@ -8,10 +8,7 @@
 - [Step 4: Verify](#step-4-verify)
 
 ## Prerequisites
-- `gitlab-account` credential exists in Jenkins (used by `stageCheckout`)
-- `hengly-ssh-creds` (username/password) credential exists in Jenkins (used by `stageDeploy`)
-- The 3 shared libraries are registered in Jenkins global config: `env-configs`, `pipeline`, `notify`
-- Target deploy server is reachable via SSH from the Jenkins host, and already has the project cloned at the path you'll set below
+- The shared libraries are registered in Jenkins global config
 
 ## Step 1: Add Environment Values
 
@@ -34,25 +31,20 @@ prod:
   SOURCE_BRANCH: "main"
 ```
 
-Notes:
-- File path must be exactly `resources/<PROJECT_NAME>/<SERVICE_NAME>.yml` — this is looked up dynamically via `libraryResource()`, so a typo in either name means an empty/missing config, not a clear "file not found."
-- `SOURCE_BRANCH` here is what `stageCheckout` uses for `GitSCM` branches — keep it consistent with your branch strategy (`dev`/`uat`/`main`).
-- Branch name → env section mapping is hardcoded in `envLoader.groovy`: `main → prod`, `uat → uat`, `dev → dev`. Any other branch name will hard-fail the build. If a service needs a different branch name, that mapping has to change in the shared lib, not per-service.
-
 ## Step 2: Add the Jenkinsfile
 
 In the `Jenkinsfile` repo, under `Jenkinsfile/YOUR_PROJECT_NAME/`, create `YOUR_SERVICE_NAME.jenkinsfile`:
 
 ```groovy
-@Library(['env-configs@master', 'pipeline@v1.0.0', 'notify@master']) _
+@Library(['YOUR_LIBRARY_NAME@master', 'YOUR_LIBRARY_NAME@v1.0.0', 'YOUR_LIBRARY_NAME@master']) _ // can use with both branch and tag 
 
 def config = [
     PROJECT_NAME: 'YOUR_PROJECT_NAME',
     SERVICE_NAME: 'YOUR_SERVICE_NAME',
-    PROJECT_URL: 'YOUR_GIT_REPO_URL',   // must NOT be blank — configEnvLoader fails on empty string
+    PROJECT_URL: 'YOUR_GIT_REPO_URL',   
     stages: [
         [name: 'Check',  type: 'check',  enabled: 'true' ],
-        [name: 'Deploy', type: 'deploy', enabled: 'false']   // flip on when ready
+        [name: 'Deploy', type: 'deploy', enabled: 'false']   
     ]
 ]
 
