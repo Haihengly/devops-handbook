@@ -123,3 +123,5 @@ openssl rand -hex <bytes> #bytes can be any number you want
   - `Executing stage: check` → `✅ Stage 'check' completed successfully`
 - Confirm you got a Telegram notification (success/failure/unstable) from `telegramNotify`.
 - Once `Check` is solid, flip `Deploy` to `enabled: 'true'` and re-test.
+
+Repository : https://github.com/Haihengly/Share-Library-Platform.git
