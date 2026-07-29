@@ -116,13 +116,6 @@ corePipeline
 
 7. **`post` block** always fires `telegramNotify.notify(...)` with the build result.
 
-## Stage Types
-
-| type | Function | Status |
-|---|---|---|
-| `check` | `stageCheckout` | ✅ implemented — GitSCM checkout using `SOURCE_BRANCH` + `PROJECT_URL` |
-| `deploy` | `stageDeploy` | ✅ implemented — SSH into `SERVER`, pull latest, `docker compose up -d --build` |
-| `build` | `stageBuild` | ⚠️ **not implemented** — referenced in registry, function doesn't exist yet |
 
 ## Related Docs
 - [`setup.md`](./setup.md) — how to wire up a new service to use this library

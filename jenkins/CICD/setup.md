@@ -1,14 +1,25 @@
 # Setup — Onboarding a New Service to the Shared Library
 
 ## Table of Contents
-- [Prerequisites](#prerequisites)
-- [Step 1: Add Environment Values](#step-1-add-environment-values)
-- [Step 2: Add the Jenkinsfile](#step-2-add-the-jenkinsfile)
-- [Step 3: Create the Multibranch Job](#step-3-create-the-multibranch-job)
-- [Step 4: Verify](#step-4-verify)
+- [Add libraries in jenkins global](#Add-libraries-in-Jenkins-global-config)
+- [Add the Jenkinsfile](#add-the-jenkinsfile)
+- [Add Environment Values](#add-environment-values)
+- [Create the Multibranch Job](#create-the-multibranch-job)
+- [Verify](#step-4-verify)
 
-## Prerequisites
-- The shared libraries are registered in Jenkins global config
+## Add libraries in jenkins global
+
+1. Go to Manage Jenkins -> System (Configure global setting and paths)
+
+2. Scroll down to Global Trusted Pipeline Libraries -> Click Add Button 
+
+3. Leave it as default only edit the following
+
+- Name : YOUR_LIBRARY_NAME
+
+- Under Source Code Management -> Pick Git and add the project repository url (add credentials if your repo is private)
+
+- Library Path leave it as default (if your library source live in custom path -> point to your custom path)
 
 ## Step 1: Add Environment Values
 
@@ -50,11 +61,6 @@ def config = [
 
 corePipeline(config)
 ```
-
-Important:
-- `PROJECT_URL` must be a real, non-empty value — `configEnvLoader` does `if (!config.PROJECT_URL) error(...)`, and an empty string is falsy in Groovy, so this will hard-fail if left blank.
-- Only `check` and `deploy` stage types currently work. Do not set `build`, `cleanup`, or `test` to `enabled: 'true'` yet — see [troubleshooting.md](./troubleshooting.md).
-- `enabled` should be the string `'true'` or `'false'` (matching the existing pattern) — `configSanitize` converts it to a real Boolean for you.
 
 ## Step 3: Create the Multibranch Job
 
