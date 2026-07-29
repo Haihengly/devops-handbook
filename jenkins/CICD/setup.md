@@ -96,20 +96,20 @@ prod:
 
 5. Build Configuration : 
 
-- by Remote Jenkinsfile Provider Plugin
+- Select by Remote Jenkinsfile Provider Plugin
 
 - Under Script Path point to your jenkins file path 
 
 - Input your Jenkins file Repository URL (Add Credentials if private)
 
-6. Scan Multibranch Pipeline Triggers : 
+6. Under Scan Multibranch Pipeline Triggers : 
 
-- Input Trigger token (if you want a webhook)
+- Select Scan by webhook -> Input Your Trigger token
 
-- Generate random hexadecimal string
+- Generate random hexadecimal string For Token 
 
 ```
-openssl rand -hex <bytes>
+openssl rand -hex <bytes> #bytes can be any number you want
 ```
 
 7. Save : Scan the repo, confirm your branches are picked up
