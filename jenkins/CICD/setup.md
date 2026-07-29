@@ -28,7 +28,7 @@
 In the `Jenkinsfile` repo, under `Jenkinsfile/YOUR_PROJECT_NAME/`, create `YOUR_SERVICE_NAME.jenkinsfile`:
 
 ```groovy
-@Library(['YOUR_LIBRARY_NAME@master', 'YOUR_LIBRARY_NAME@v1.0.0', 'YOUR_LIBRARY_NAME@master']) _
+@Library(['YOUR_PIPELINE_LOGIC_LIBRARY_NAME@master', 'YOUR_ENV_CONFIG_LIBRARY_NAME@v1.0.0', 'YOUR_NOTIFY_LIBRARY_NAME@master']) _
 
 def config = [
     PROJECT_NAME: 'YOUR_PROJECT_NAME',
@@ -70,19 +70,46 @@ prod:
   SOURCE_BRANCH: "main"
 ```
 
-## Step 3: Create the Multibranch Job
+### Note : ENV values depend on how much of your env 
+
+## Create the Multibranch Job
+
+### Before Create Multibranch Job you need to install the follow plugin
+
+1. Remote Jenkinsfile Provider 
+
+2. Multibranch Scan Webhook Trigger
+
+### After create multibranch job in jenkins, In multibranch job form enter the following :
 
 1. New Item → Multibranch Pipeline
-2. Branch source → your git repo for the service
-3. Build Configuration → "by Jenkinsfile" → Script Path → point at `YOUR_SERVICE_NAME.jenkinsfile` in the Jenkinsfile repo (this repo is separate from the service's own source repo, since you're using centralized Jenkinsfiles)
-4. Scan the repo, confirm `dev`/`uat`/`main` branches are picked up
 
-## Step 4: Verify
+2. Branch Sources :
 
-- Trigger a build on the `dev` branch with only `Check` enabled first.
-- Confirm in the build log:
-  - `✅ Config loaded successfully!` (from `configEnvLoader`)
-  - `✅ Config validation passed` (from `configValidate`)
-  - `Executing stage: check` → `✅ Stage 'check' completed successfully`
-- Confirm you got a Telegram notification (success/failure/unstable) from `telegramNotify`.
-- Once `Check` is solid, flip `Deploy` to `enabled: 'true'` and re-test. Watch for the deploy stage's hardcoded `docker compose up -d --build web` — see troubleshooting for what that means for non-`web` services.
+- Add source -> Git 
+
+- Input your Project Repository (Add Credentials if your repo is private)
+
+4. Behaviors : 
+
+- Add -> Filter by name (with wildcards) input your brach that you want to deploy
+
+5. Build Configuration : 
+
+- by Remote Jenkinsfile Provider Plugin
+
+- Under Script Path point to your jenkins file path 
+
+- Input your Jenkins file Repository URL (Add Credentials if private)
+
+6. Scan Multibranch Pipeline Triggers : 
+
+- Input Trigger token (if you want a webhook)
+
+- Generate random hexadecimal string
+
+```
+openssl rand -hex <bytes>
+```
+
+7. Save : Scan the repo, confirm your branches are picked up
