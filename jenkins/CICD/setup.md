@@ -1,11 +1,11 @@
 # Setup — Onboarding a New Service to the Shared Library
 
 ## Table of Contents
-- [Add libraries in jenkins global](#Add-libraries-in-Jenkins-global-config)
+- [Add libraries in jenkins global](#add-libraries-in-jenkins-global)
 - [Add the Jenkinsfile](#add-the-jenkinsfile)
 - [Add Environment Values](#add-environment-values)
 - [Create the Multibranch Job](#create-the-multibranch-job)
-- [Verify](#step-4-verify)
+- [Verify](#verify)
 
 ## Add libraries in jenkins global
 
@@ -90,7 +90,7 @@ prod:
 
 - Input your Project Repository (Add Credentials if your repo is private)
 
-4. Behaviors : 
+3. Behaviors : 
 
 - Add -> Filter by name (with wildcards) input your brach that you want to deploy
 
@@ -113,3 +113,13 @@ openssl rand -hex <bytes> #bytes can be any number you want
 ```
 
 7. Save : Scan the repo, confirm your branches are picked up
+
+## Verify
+
+- Trigger a build on the `dev` branch with only `Check` enabled first.
+- Confirm in the build log:
+  - `✅ Config loaded successfully!` (from `configEnvLoader`)
+  - `✅ Config validation passed` (from `configValidate`)
+  - `Executing stage: check` → `✅ Stage 'check' completed successfully`
+- Confirm you got a Telegram notification (success/failure/unstable) from `telegramNotify`.
+- Once `Check` is solid, flip `Deploy` to `enabled: 'true'` and re-test.

@@ -6,7 +6,6 @@
 - [How It Works (High Level)](#how-it-works-high-level)
 - [Pipeline Flow](#pipeline-flow)
 - [Stage Types](#stage-types)
-- [Status](#status)
 - [Related Docs](#related-docs)
 
 ## What This Is
@@ -116,6 +115,15 @@ corePipeline
 
 7. **`post` block** always fires `telegramNotify.notify(...)` with the build result.
 
+## Stage Types
+
+| type | Function | Status |
+|---|---|---|
+| `check` | `stageCheckout` | ✅ implemented — GitSCM checkout using `SOURCE_BRANCH` + `PROJECT_URL` |
+| `deploy` | `stageDeploy` | ✅ implemented — SSH into `SERVER`, pull latest, `docker compose up -d --build` |
+| `build` / `cleanup` / `test` / other `stage_N` | `stageBuild` / `stageCleanUp` / `stageTest` / etc. | ⚠️ **not implemented yet** — do not set `enabled: 'true'` for these until the corresponding `stage_N.groovy` function actually exists |
+
+If a Jenkinsfile enables a stage type that doesn't have a matching function in `share-library/vars/`, `stageExecutor` will fail with an unknown-function error. Always check this table (or the actual repo) before flipping a new stage type on.
 
 ## Related Docs
 - [`setup.md`](./setup.md) — how to wire up a new service to use this library
