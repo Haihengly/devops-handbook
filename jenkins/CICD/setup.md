@@ -21,7 +21,35 @@
 
 - Library Path leave it as default (if your library source live in custom path -> point to your custom path)
 
-## Step 1: Add Environment Values
+- Click Save
+
+## Add the Jenkinsfile
+
+In the `Jenkinsfile` repo, under `Jenkinsfile/YOUR_PROJECT_NAME/`, create `YOUR_SERVICE_NAME.jenkinsfile`:
+
+```groovy
+@Library(['YOUR_LIBRARY_NAME@master', 'YOUR_LIBRARY_NAME@v1.0.0', 'YOUR_LIBRARY_NAME@master']) _
+
+def config = [
+    PROJECT_NAME: 'YOUR_PROJECT_NAME',
+    SERVICE_NAME: 'YOUR_SERVICE_NAME',
+    PROJECT_URL: 'YOUR_GIT_REPO_URL',   
+    stages: [
+        [name: 'Check',  type: 'check',  enabled: 'true' ],
+        [name: 'Deploy', type: 'deploy', enabled: 'false']   
+    ]
+]
+
+corePipeline(config)
+```
+
+### Important :
+
+- PROJECT_NAME and SERVICE_NAME must be exact same as project and service in environment_file Repo
+
+- For the imported libraries can be use with tag or branch
+
+## Add Environment Values
 
 In the `environment-file` repo, create (or edit) `resources/YOUR_PROJECT_NAME/YOUR_SERVICE_NAME.yml`:
 
@@ -40,26 +68,6 @@ prod:
   SERVER: "YOUR_PROD_SERVER_IP_OR_HOST"
   PROJECT_PATH: "/path/to/project/on/server"
   SOURCE_BRANCH: "main"
-```
-
-## Step 2: Add the Jenkinsfile
-
-In the `Jenkinsfile` repo, under `Jenkinsfile/YOUR_PROJECT_NAME/`, create `YOUR_SERVICE_NAME.jenkinsfile`:
-
-```groovy
-@Library(['YOUR_LIBRARY_NAME@master', 'YOUR_LIBRARY_NAME@v1.0.0', 'YOUR_LIBRARY_NAME@master']) _ // can use with both branch and tag 
-
-def config = [
-    PROJECT_NAME: 'YOUR_PROJECT_NAME',
-    SERVICE_NAME: 'YOUR_SERVICE_NAME',
-    PROJECT_URL: 'YOUR_GIT_REPO_URL',   
-    stages: [
-        [name: 'Check',  type: 'check',  enabled: 'true' ],
-        [name: 'Deploy', type: 'deploy', enabled: 'false']   
-    ]
-]
-
-corePipeline(config)
 ```
 
 ## Step 3: Create the Multibranch Job
