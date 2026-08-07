@@ -87,8 +87,9 @@ corePipeline
 
 ## Pipeline Flow
 
-1. **Jenkinsfile** loads 3 libraries (`env-configs`, `pipeline`, `notify`), builds a `config` map:
+1. **Jenkinsfile** loads libraries and builds a `config` map:
    ```groovy
+   @Library(['YOUR_PIPELINE_LOGIC_LIBRARY_NAME@BRANCH_OR_TAG', 'YOUR_ENV_CONFIG_LIBRARY_NAME@BRANCH_OR_TAG', 'YOUR_NOTIFY_LIBRARY_NAME@BRANCH_OR_TAG']) _
    def config = [
        PROJECT_NAME: 'YOUR_PROJECT_NAME',
        SERVICE_NAME: 'YOUR_SERVCICE_NAME',
