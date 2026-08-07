@@ -1,4 +1,4 @@
-# Jenkins Shared Library — DevOps Pipeline
+# Jenkins Shared Library
 
 ## Table of Contents
 - [What This Is](#what-this-is)
@@ -72,7 +72,7 @@ share-library/vars/
 └── stage_N.groovy           # stage_N
 ```
 
-## How It Works (High Level)
+## How It Works 
 
 ```
 Jenkinsfile (per service)

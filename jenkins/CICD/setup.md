@@ -1,4 +1,4 @@
-# Setup — Onboarding a New Service to the Shared Library
+# Setup 
 
 ## Table of Contents
 - [Add libraries in jenkins global](#add-libraries-in-jenkins-global)
@@ -25,10 +25,10 @@
 
 ## Add the Jenkinsfile
 
-In the `Jenkinsfile` repo, under `Jenkinsfile/YOUR_PROJECT_NAME/`, create `YOUR_SERVICE_NAME.jenkinsfile`:
+In the `Jenkinsfile` repo, create `YOUR_SERVICE_NAME.jenkinsfile`:
 
 ```groovy
-@Library(['YOUR_PIPELINE_LOGIC_LIBRARY_NAME@master', 'YOUR_ENV_CONFIG_LIBRARY_NAME@v1.0.0', 'YOUR_NOTIFY_LIBRARY_NAME@master']) _
+@Library(['YOUR_PIPELINE_LOGIC_LIBRARY_NAME@BRANCH_OR_TAG', 'YOUR_ENV_CONFIG_LIBRARY_NAME@BRANCH_OR_TAG', 'YOUR_NOTIFY_LIBRARY_NAME@BRANCH_OR_TAG']) _
 
 def config = [
     PROJECT_NAME: 'YOUR_PROJECT_NAME',
@@ -45,7 +45,7 @@ corePipeline(config)
 
 ### Important :
 
-- PROJECT_NAME and SERVICE_NAME must be exact same as project and service in environment_file Repo
+- PROJECT_NAME and SERVICE_NAME must be exact same as project and service in `environment_file` Repo
 
 - For the imported libraries can be use with tag or branch
 
@@ -121,7 +121,6 @@ openssl rand -hex <bytes> #bytes can be any number you want
   - `✅ Config loaded successfully!` (from `configEnvLoader`)
   - `✅ Config validation passed` (from `configValidate`)
   - `Executing stage: check` → `✅ Stage 'check' completed successfully`
-- Confirm you got a Telegram notification (success/failure/unstable) from `telegramNotify`.
 - Once `Check` is solid, flip `Deploy` to `enabled: 'true'` and re-test.
 
 Repository : https://github.com/Haihengly/Share-Library-Platform.git
